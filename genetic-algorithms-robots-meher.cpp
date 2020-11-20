@@ -41,7 +41,7 @@ class Vector
         Vector(Vector& vector)
 		{	
             // Assign one Vector to another
-			delete this->array;
+						delete this->array;
             this->array=nullptr;
             this->array=vector.array;
 		}
@@ -473,8 +473,12 @@ class Gene
     {
       this->gene= new Vector<Sensor*>(5);
      
-    }		
-    else
+    }
+		else if(position<0)
+		{
+			this->gene= new Vector<Sensor*>(4);
+		}		
+    else if(position==15)
     {
       this->gene= new Vector<Sensor*>(1); 
     } 
@@ -505,21 +509,23 @@ class Gene
 
         // The first 3 genes store sensor states
         // The fourth gene stores behavior
-        if(i<4)
+        if(i<4&&position!=15)
         {
            sensorState=randomNumberGenerator(0,2);
            sensorOrientation=array[i];
+					 
           if(position==15)
           {
             sensorState=1;
           }
           
         }
-        else
+        else if(position==15)
         {
           // The position of the gene that determines the command;
           int randomNumber=randomNumberGenerator(0,3);
-          sensorState=1;
+					//cout<<"Random Number"<<randomNumber<<endl;
+					sensorState=1;
           sensorOrientation=array[randomNumber];
         }
         Sensor* sensor= new Sensor(sensorState,sensorOrientation);
@@ -567,26 +573,38 @@ class Robot
   public:
  
   Vector<Gene*>* genome= new Vector<Gene*>(16); // robot's genome
-  Vector<Gene*>* sensor= new Vector<Gene*>(1);
+  Gene* sensor = new Gene(-1);
 	
   Grid* grid= new Grid(10); // Store the path that the robot moved
   int health=5; // The lifespan of the robot
   int lifespan;
-
+	
   // The coordinates of the robot
   int xCoord;
   int yCoord;
+
+	Robot& operator =(const Robot& robot)
+	{
+		
+		this->lifespan= robot.lifespan;
+		this->xCoord=robot.xCoord;
+		this->yCoord=robot.yCoord;
+		this->genome= robot.genome;
+		this->sensor= robot.sensor;
+		return *this;
+	}
+
+
 
   Robot()
   {
     // Assign a grid to a robot
     // Add all 16 genes to the robot
     addGenesToRobot();
-		loadSensorToRobot();
+		//loadSensorToRobot();
     populateGrid();
     //lifetime();
-		loadSensorToRobot();
-    sensorData();
+		sensorData();
 		
   }
 
@@ -595,7 +613,7 @@ class Robot
     // Make a new robot from two parents
     reproduction(parent1,parent2);
     populateGrid();
-		loadSensorToRobot();
+		//loadSensorToRobot();
 		
     //lifetime();
     
@@ -631,27 +649,29 @@ class Robot
     // A 1 code for wall 
     // A code 2 for battery
     // Holds all the robots Sensor Readings
-    //int* sensorStates = returnSensorStates(xCoord,yCoord);
-		cout<<"Gene\n";
-    cout<<*this->sensor->get(0)<<endl;
-		//cout<<gene;
-		cout<<"End Gene\n";
 
 
-		/*
-    for(int i=0;i<this->sensor->get(0)->gene->size()-1;i++)
-    {
-			 cout<<"Loop\n";
-			cout<< this->sensor->get(0)->gene->get(i)->sensorState<<'\n';
-      this->sensor->get(0)->gene->get(i)->sensorState=sensorStates[i];
+    int* sensorStates = returnSensorStates(xCoord,yCoord);
+		
+		//cout<<"Gene"<<*this->sensor<<endl;
+		
+		
+		
+		
+    for(int i=0;i<this->sensor->gene->size();i++)
+		{
+			//cout<<"Sensor State To change\n"<<sensorStates[i]<<'\n';
+      this->sensor->gene->get(i)->sensorState=sensorStates[i];
+
       
-      // REMOVE
-      cout<<"Diagnostics\n";
-      cout<<this->sensor->get(0)->gene->get(i)->sensorState<<'\n';
+      //cout<<this->sensor->get(0)->gene->get(i)->sensorState<<'\n';
     }
-		*/
-    //delete [] sensorStates;
-
+		//cout<<*this->sensor->get(0)<<endl;
+		//cout<<grid->grid<<endl;
+		
+		
+    delete [] sensorStates;
+		
   }
 
   int outputSensorState(int xCoord, int yCoord)
@@ -671,40 +691,42 @@ class Robot
     }
     else
     {
-      return 0;
+      return -1;
     }
     
   }
-
-  int* returnSensorStates(int xCoord,int yCoord)
+int* returnSensorStates(int xCoord,int yCoord)
   {
-    cout<<"returnSensorStates(int xCoord,int yCoord)\n";
+    
     int* sensorStates = new int[4];
 
     // Sensor at the north of the robot
     sensorStates[0]=outputSensorState(xCoord,yCoord+1);
-    cout<<"returnSensorStates(int xCoord,int yCoord)\n";
+    
 
     // Sensor at the south of the robot
     sensorStates[1]=outputSensorState(xCoord,yCoord-1);
-    cout<<"returnSensorStates(int xCoord,int yCoord)\n";
+
 
     // Sensor reading at the west of the robot
-    sensorStates[1]=outputSensorState(xCoord-1,yCoord);
-    cout<<"returnSensorStates(int xCoord,int yCoord)\n";
-
-    // Sensor reasding at the south of the robot
-    sensorStates[1]=outputSensorState(xCoord+1,yCoord);
+		
+    sensorStates[2]=outputSensorState(xCoord-1,yCoord);
+		
+		
     
 
+    // Sensor reasding at the south of the robot
+    sensorStates[3]=outputSensorState(xCoord+1,yCoord);
+			
     return sensorStates;
+		
   }
   
 
   bool positionIsWall(int xCoord,int yCoord)
   {
     int gridSize=this->grid->gridSize;
-    return (xCoord>= gridSize||yCoord>=gridSize||xCoord<0||yCoord<0);
+    return (xCoord>9||yCoord>9||xCoord<0||yCoord<0);
   }
 
   bool positionhasBattery(int xCoord, int yCoord)
@@ -725,7 +747,7 @@ class Robot
 
     // return If the position does not have a wall or battery
     // reutrn if the position has a blank
-    return((!isWall||!isBattery)||this->grid->grid[xCoord][yCoord]=="");
+    return(this->grid->grid[xCoord][yCoord]=="");
 
   }
 
@@ -755,16 +777,17 @@ class Robot
 	} 
 
 	void loadSensorToRobot()
-  {
+  {/*
     // Adds Sensor
     int geneSize=15;
     int index=0;
     while(index<sensor->size())
     {
-        Gene* gene= new Gene(index);
+        Sensor* sensor= new Sensor();
         this->sensor->set(index,gene);
         index++;  
     } 
+		*/
   }
 
 
@@ -781,8 +804,40 @@ class Robot
 
   friend ostream& operator <<(ostream& output,Robot& robot)
   {
+		int xCoord=robot.xCoord;
+		int yCoord=robot.yCoord;
     output<<"Robot Grid:\n"<<*robot.grid;
+		
+		
+		output<<"======================\n";
+		output<<"Legend:\n";
+		output<<"Empty Space Code: 0\n";
+		output<<"Wall Code: 1\n";
+		output<<"Battery Code: 2\n";
+		output<<'\n';
+
+		output<<"Sensor Locations\n";
+		output<<"North\n";
+		output<<"X-Coordinate: "<<(xCoord)<<endl;
+		output<<"Y-Coordinate: "<<(yCoord+1)<<endl;
+	
+		output<<"South\n";
+		output<<"X-Coordinate: "<<(xCoord)<<endl;
+		output<<"Y-Coordinate: "<<(yCoord-1)<<endl;
+
+		output<<"West\n";
+		output<<"X-Coordinate: "<<(robot.xCoord-1)<<endl;
+		output<<"Y-Coordinate: "<<(robot.yCoord)<<endl;
+
+		output<<"East\n";
+		output<<"X-Coordinate: "<<(1+xCoord)<<endl;
+		output<<"Y-Coordinate: "<<robot.yCoord--<<endl;
+		cout<<"======================\n";
+
+		output<<"Robot Sensor\n"<<*robot.sensor<<'\n';
+		output<<"======================\n";
     output<<"Robot Health: "<<robot.health<<'\n';
+		
     output<<"Lifespan: "<<robot.lifespan<<'\n';
     for(int i=0;i<robot.genome->size();i++)
     {
@@ -878,7 +933,7 @@ class Simulation
     
     // Run simulation for all robots
    
-    cout<<"running simulation\n";
+    /*
     for(int index=0;index<population->size();index++)
     {
         
@@ -886,6 +941,7 @@ class Simulation
 
   
     }
+		*/
   }
 
   void runRobotThoughSimulation(Robot& robot)
