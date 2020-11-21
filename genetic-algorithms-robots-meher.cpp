@@ -457,6 +457,12 @@ struct Sensor
     return output;
   }
 
+
+  bool operator==(Sensor& sensor)
+  {
+    return (sensorState==this->sensorState&&this->orientation==sensor.orientation);
+  }
+
 };
 
 
@@ -509,7 +515,7 @@ class Gene
 
         // The first 3 genes store sensor states
         // The fourth gene stores behavior
-        if(i<4&&position!=15)
+        if(i<4)
         {
            sensorState=randomNumberGenerator(0,2);
            sensorOrientation=array[i];
@@ -520,13 +526,13 @@ class Gene
           }
           
         }
-        else if(position==15)
+        else
         {
           // The position of the gene that determines the command;
-          int randomNumber=randomNumberGenerator(0,3);
 					
 					sensorState=1;
-          sensorOrientation=array[randomNumber];
+          sensorOrientation=array[randomNumberGenerator(0,3)];
+          cout<<sensorOrientation<<endl;
         }
         Sensor* sensor= new Sensor(sensorState,sensorOrientation);
         this->gene->set(i,sensor);
@@ -774,7 +780,6 @@ class Robot
   void robotUnitTest()
   {
     Robot robot;
-    cout<<robot;
     robot.robotLifeCycle();
     cout<<robot;
   }
@@ -783,15 +788,22 @@ class Robot
   {
 		int xCoord=robot.xCoord;
 		int yCoord=robot.yCoord;
+    cout<<"Robot Data:\n";
     output<<"Robot Grid:\n"<<*robot.grid;
 		
-		
+		output<<"Robot Health: "<<robot.health<<'\n';
+    output<<"Lifespan: "<<robot.lifespan<<'\n';
 		output<<"======================\n";
 		output<<"Legend:\n";
 		output<<"Empty Space Code: 0\n";
 		output<<"Wall Code: 1\n";
 		output<<"Battery Code: 2\n";
 		output<<'\n';
+
+    cout<<"Robot Position:\n";
+    output<<"X-Coordinate: "<<(xCoord)<<endl;
+		output<<"Y-Coordinate: "<<(yCoord)<<endl<<endl;
+
 
 		output<<"Sensor Locations\n";
 		output<<"North\n";
@@ -813,9 +825,7 @@ class Robot
 
 		output<<"Robot Sensor\n"<<*robot.sensor<<'\n';
 		output<<"======================\n";
-    output<<"Robot Health: "<<robot.health<<'\n';
-		
-    output<<"Lifespan: "<<robot.lifespan<<'\n';
+    
     for(int i=0;i<robot.genome->size();i++)
     {
       output<<"Gene: "<<i+1<<'\n';
@@ -869,34 +879,35 @@ class Robot
   {
    while(this->health>0)
    {
-     positionToMoveRobot();
-     
+     positionToMoveRobot();     
    } 
   }
 
   void positionToMoveRobot()
   {
 
-    this->lifespan++; // Increment the lifespan which stores how many turns the robot lived
-    // Check if any of the genes match the sensor code
+    /*
+      Scans the Genes of the genome and compares it to the sensor
+      If the sensor is matched then the gene that is matched last sensor is used for movement
+    */
 
-    bool robotWasMoved;
+    this->lifespan++; // Increment the lifespan which stores how many turns the robot lived
+    this->health--;
+  
+    bool robotWasMoved; // Stores if the robot has been moved
     
 
-    int xCoord=0;
-    int yCoord=0;
+ 
     for(int i=0; i<this->genome->size()-1;i++)
     {
+     
       if(sensorIsMatched(*this->genome->get(i),*this->sensor))
       {
-        // Store the coordinates where the robot is currently at
-        xCoord=this->xCoord;
-        yCoord=this->xCoord;
-        this->grid->grid[xCoord][yCoord]="@";
-        // track the robot's old position and add it to the gridbar
-
-        // Move the robot based on the orientation of the last sensor which stores movement instructions
-        moveBasedOnOrientation(this->genome->get(i)->gene->get(15)->orientation);
+        // Stores the last moved location in the grid with a @ symbol
+       
+        // orientation of the last sensor of the gene is used for movement
+        moveBasedOnOrientation(this->genome->get(i)->gene->get(4)->orientation);
+                  
         // Move the robot according to the instruction of the movement code if the movement is a valid position
         robotWasMoved=true;        
       } 
@@ -907,19 +918,27 @@ class Robot
       // If the robot was not moved move the robot based on the sensor data in the default sensor
       // The default sensor stores the orientation
       moveBasedOnOrientation(this->genome->get(15)->gene->get(0)->orientation);
+  
     }
 
   }
 
-  bool sensorIsMatched(Gene& gene,Gene& sensor)
+  int sensorIsMatched(Gene& gene,Gene& sensor)
   {
     // Loop through the gene and check if the gene matches with the sensor
     for(int i=0; i<gene.gene->size()-1;i++)
     {
-      if(gene.gene->get(i)->sensorState!=sensor.gene->get(i)->sensorState)
+      
+      bool matched=*gene.gene->get(i)==*sensor.gene->get(i);
+      if(matched)
+      {
+        
+      }
+      else
       {
         return false;
       }
+      
     }
     return true;
   }
@@ -931,20 +950,19 @@ class Robot
      Check if the position has a wall
      If the position has a battery then increase health by 5
     */
-
-    this->health--;
-
+   
     if(!positionIsWall(xCoord,yCoord))
     {
-      this->grid->grid[xCoord][yCoord]="R";
-      this->xCoord=xCoord;
-      this->yCoord=yCoord;
       
+      this->grid->grid[this->xCoord][this->yCoord]="@";
       if(positionhasBattery(xCoord,yCoord))
       {
         this->health+=5;
         
       }
+      this->grid->grid[xCoord][yCoord]="R";
+      this->xCoord=xCoord;
+      this->yCoord=yCoord;
     }
     
   }
@@ -1080,8 +1098,8 @@ void UnitTests()
   */
   //Grid grid;
   //grid.gridUnitTest();
-  Robot robot;
-  robot.robotUnitTest();
+  Robot robot1;
+  robot1.robotUnitTest();
   
   //Simulation simulation;
   //simulation.unitTests();
