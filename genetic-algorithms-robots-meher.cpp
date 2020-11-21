@@ -524,7 +524,7 @@ class Gene
         {
           // The position of the gene that determines the command;
           int randomNumber=randomNumberGenerator(0,3);
-					//cout<<"Random Number"<<randomNumber<<endl;
+					
 					sensorState=1;
           sensorOrientation=array[randomNumber];
         }
@@ -577,7 +577,7 @@ class Robot
 	
   Grid* grid= new Grid(10); // Store the path that the robot moved
   int health=5; // The lifespan of the robot
-  int lifespan;
+  int lifespan=0;
 	
   // The coordinates of the robot
   int xCoord;
@@ -595,15 +595,24 @@ class Robot
 	}
 
 
+  Robot(const Robot& robot)
+	{
+		
+		this->lifespan= robot.lifespan;
+		this->xCoord=robot.xCoord;
+		this->yCoord=robot.yCoord;
+		this->genome= robot.genome;
+		this->sensor= robot.sensor;
+		
+	}
+
 
   Robot()
   {
     // Assign a grid to a robot
     // Add all 16 genes to the robot
     addGenesToRobot();
-		//loadSensorToRobot();
     populateGrid();
-    //lifetime();
 		sensorData();
 		
   }
@@ -613,7 +622,7 @@ class Robot
     // Make a new robot from two parents
     reproduction(parent1,parent2);
     populateGrid();
-		//loadSensorToRobot();
+		
 		
     //lifetime();
     
@@ -645,38 +654,28 @@ class Robot
 
   void sensorData()
   {
+    
     // Return a 0 code for empty
     // A 1 code for wall 
     // A code 2 for battery
     // Holds all the robots Sensor Readings
 
 
-    int* sensorStates = returnSensorStates(xCoord,yCoord);
-		
-		//cout<<"Gene"<<*this->sensor<<endl;
-		
-		
-		
+    int* sensorStates = returnSensorStates(xCoord,yCoord);		
 		
     for(int i=0;i<this->sensor->gene->size();i++)
 		{
-			//cout<<"Sensor State To change\n"<<sensorStates[i]<<'\n';
+			
       this->sensor->gene->get(i)->sensorState=sensorStates[i];
-
-      
-      //cout<<this->sensor->get(0)->gene->get(i)->sensorState<<'\n';
     }
-		//cout<<*this->sensor->get(0)<<endl;
-		//cout<<grid->grid<<endl;
-		
-		
+
     delete [] sensorStates;
 		
   }
 
   int outputSensorState(int xCoord, int yCoord)
   {
-    
+     
     if(positionIsWall( xCoord,yCoord))
     {
       return 1;
@@ -695,7 +694,8 @@ class Robot
     }
     
   }
-int* returnSensorStates(int xCoord,int yCoord)
+
+  int* returnSensorStates(int xCoord,int yCoord)
   {
     
     int* sensorStates = new int[4];
@@ -712,9 +712,6 @@ int* returnSensorStates(int xCoord,int yCoord)
 		
     sensorStates[2]=outputSensorState(xCoord-1,yCoord);
 		
-		
-    
-
     // Sensor reasding at the south of the robot
     sensorStates[3]=outputSensorState(xCoord+1,yCoord);
 			
@@ -732,7 +729,9 @@ int* returnSensorStates(int xCoord,int yCoord)
   bool positionhasBattery(int xCoord, int yCoord)
   {
     if(!positionIsWall(xCoord, yCoord))
-    {return(this->grid->grid[xCoord][yCoord]=="B");}
+    {
+      return(this->grid->grid[xCoord][yCoord]=="B");
+    }
     else
     {
       return false;
@@ -747,17 +746,11 @@ int* returnSensorStates(int xCoord,int yCoord)
 
     // return If the position does not have a wall or battery
     // reutrn if the position has a blank
-    return(this->grid->grid[xCoord][yCoord]=="");
-
+    return((!isBattery&&!isWall)||this->grid->grid[xCoord][yCoord]=="");
   }
 
+ 
 
-  void moveRobot()
-  {
-    // If the sensor matches the position
-     // Then move robot else default behaviour
-  }
-  
   void reproduction(Robot& parent1,Robot& parent2)
   {
     // splice genes from parent into child
@@ -768,37 +761,21 @@ int* returnSensorStates(int xCoord,int yCoord)
     // Adds all 16 genes to the robot
     int geneSize=15;
     int index=0;
+    
     while(index<genome->size())
-    {        
+    {   
         Gene* gene= new Gene(index);
         this->genome->set(index,gene);
         index++;  
     }
+    
 	} 
-
-	void loadSensorToRobot()
-  {/*
-    // Adds Sensor
-    int geneSize=15;
-    int index=0;
-    while(index<sensor->size())
-    {
-        Sensor* sensor= new Sensor();
-        this->sensor->set(index,gene);
-        index++;  
-    } 
-		*/
-  }
-
-
-
-
-
-
 
   void robotUnitTest()
   {
     Robot robot;
+    cout<<robot;
+    robot.robotLifeCycle();
     cout<<robot;
   }
 
@@ -880,18 +857,122 @@ int* returnSensorStates(int xCoord,int yCoord)
           {
             this->xCoord=xCoord;
             this->yCoord=yCoord;
-            numberOfCells++;
-            
+            numberOfCells++; 
           }
         }
 
       }
     }
+  }
+
+  void robotLifeCycle()
+  {
+   while(this->health>0)
+   {
+     positionToMoveRobot();
+     
+   } 
+  }
+
+  void positionToMoveRobot()
+  {
+
+    this->lifespan++; // Increment the lifespan which stores how many turns the robot lived
+    // Check if any of the genes match the sensor code
+
+    bool robotWasMoved;
+    
+
+    int xCoord=0;
+    int yCoord=0;
+    for(int i=0; i<this->genome->size()-1;i++)
+    {
+      if(sensorIsMatched(*this->genome->get(i),*this->sensor))
+      {
+        // Store the coordinates where the robot is currently at
+        xCoord=this->xCoord;
+        yCoord=this->xCoord;
+        this->grid->grid[xCoord][yCoord]="@";
+        // track the robot's old position and add it to the gridbar
+
+        // Move the robot based on the orientation of the last sensor which stores movement instructions
+        moveBasedOnOrientation(this->genome->get(i)->gene->get(15)->orientation);
+        // Move the robot according to the instruction of the movement code if the movement is a valid position
+        robotWasMoved=true;        
+      } 
+    }
+
+    if(!robotWasMoved)
+    {
+      // If the robot was not moved move the robot based on the sensor data in the default sensor
+      // The default sensor stores the orientation
+      moveBasedOnOrientation(this->genome->get(15)->gene->get(0)->orientation);
+    }
 
   }
-  
 
+  bool sensorIsMatched(Gene& gene,Gene& sensor)
+  {
+    // Loop through the gene and check if the gene matches with the sensor
+    for(int i=0; i<gene.gene->size()-1;i++)
+    {
+      if(gene.gene->get(i)->sensorState!=sensor.gene->get(i)->sensorState)
+      {
+        return false;
+      }
+    }
+    return true;
+  }
  
+  void moveRobot(int xCoord,int yCoord)
+  {
+    /*
+     Move Robot
+     Check if the position has a wall
+     If the position has a battery then increase health by 5
+    */
+
+    this->health--;
+
+    if(!positionIsWall(xCoord,yCoord))
+    {
+      this->grid->grid[xCoord][yCoord]="R";
+      this->xCoord=xCoord;
+      this->yCoord=yCoord;
+      
+      if(positionhasBattery(xCoord,yCoord))
+      {
+        this->health+=5;
+        
+      }
+    }
+    
+  }
+
+
+  void moveBasedOnOrientation(char orientation)
+  {
+    int xCoord=this->xCoord;
+    int yCoord=this->yCoord;
+
+    if(orientation=='n')
+    {
+      moveRobot(xCoord,yCoord+1);
+    }
+    else if(orientation=='s')
+    {
+      moveRobot(xCoord,yCoord-1);
+    }
+    else if(orientation=='w')
+    {
+      moveRobot(xCoord-1,yCoord);
+    }
+    else if(orientation=='e')
+    {
+      moveRobot(xCoord+1,yCoord);
+    }
+  } 
+
 };
 
 
@@ -904,18 +985,19 @@ class Simulation
 
   Simulation()
   {
-    population=new Vector<Robot*>(2);
+    population= new Vector<Robot*>(2);
     addRobots();
-    runSimulation();
+    //runSimulation(this->population->size());
   }
 
   Simulation(int size)
   {
-    population=new Vector<Robot*>(size);
+    population= new Vector<Robot*>(size);
     addRobots();
-    runSimulation();
+    //runSimulation(this->population->size());
   }
 
+  
   void addRobots()
   {
     int index=0;
@@ -928,20 +1010,23 @@ class Simulation
     }
   }
   
-  void runSimulation()
+  void runSimulation(int populationSize)
   {
     
-    // Run simulation for all robots
-   
-    /*
-    for(int index=0;index<population->size();index++)
-    {
-        
-      //runRobotThoughSimulation(*this->population->get(index));
-
+      // The entire population goes through the track
+      if(population->size()>1)
+      {
+        //populationLifeCycle();
+        // Remove the bottom half of the robot that do not have favorable genes 
+        //naturalSelection();
+        //matingSeasson();      
+        runSimulation(this->population->size());
+      }
+      else
+      {
+        cout<<"The population is now extict\n";
+      }    
   
-    }
-		*/
   }
 
   void runRobotThoughSimulation(Robot& robot)
@@ -969,9 +1054,6 @@ class Simulation
       index++;
     }
     
-
-    
-    
   }
 
 };
@@ -998,9 +1080,9 @@ void UnitTests()
   */
   //Grid grid;
   //grid.gridUnitTest();
-  //Robot robot;
-  //robot.robotUnitTest();
+  Robot robot;
+  robot.robotUnitTest();
   
-  Simulation simulation;
-  simulation.unitTests();
+  //Simulation simulation;
+  //simulation.unitTests();
 }
