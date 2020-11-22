@@ -293,20 +293,21 @@ class Grid
 
 	~Grid()
 	{
-    
+    /*
 		for(int index=0;index<gridSize;index++)
 		{
       // Delete all the columns of the array
      
       delete grid[index]; 
-       grid[index]=nullptr;
+       //grid[index]=nullptr;
 			
       
 		}
+    */
     // Delete array
     
     delete[] grid;
-    grid=nullptr;
+    //grid=nullptr;
   
 		
 	}
@@ -657,15 +658,12 @@ class Robot
 
   ~Robot()
   {
-    for(int i=0;i<genome->size();i++)
-    {
-      delete genome->get(i);
-      
-    }
-    grid=nullptr;
+
+    delete genome;
+
     delete grid;
 		delete sensor;
-    this->sensor=nullptr;
+
     
   }
 
@@ -1130,13 +1128,14 @@ int main()
 
 void UnitTests()
 {
-  /*
-  Gene gene(1);
-  gene.GeneUnitTest();
-  RandomNumberGenerator random;
-  */
-  //Grid grid;
-  //grid.gridUnitTest();
+  //Vector<int> Vector;
+  //Vector.VectorUnitTest();
+  //Gene gene(1);
+  //gene.GeneUnitTest();
+
+  
+  Grid grid;
+  grid.gridUnitTest();
   Robot robot1;
   robot1.robotUnitTest();
   
