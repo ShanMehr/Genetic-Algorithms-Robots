@@ -38,14 +38,7 @@ class Vector
 		}
 
 
-        Vector(Vector& vector)
-		{	
-            // Assign one Vector to another
-						delete this->array;
-            this->array=nullptr;
-            this->array=vector.array;
-		}
-
+     
 
 		Vector()
 		{
@@ -79,8 +72,9 @@ class Vector
 			// Frees the memory used by the smaller array
 			// The gradeList is set to point to the tempVector memory location
 			delete[] array; 
+      //array=nullptr;
 			array=tempVector;	
-			tempVector=nullptr;
+			//tempVector=nullptr;
 		}
 
 	public:
@@ -103,11 +97,18 @@ class Vector
 			return *this;
 		} 
 
+       Vector(Vector& vector)
+		{	
+            	delete this->array;
+      this->array=vector.array;
+		}
+
+
 		void clear()
 		{
 			// clears the contents of the arrray
 			delete[] array;
-			array=nullptr;
+			//array=nullptr;
 			length=0;
 			array= new A[length]; 
 		}
@@ -296,15 +297,16 @@ class Grid
 		for(int index=0;index<gridSize;index++)
 		{
       // Delete all the columns of the array
-      grid[index]=nullptr;
+     
       delete grid[index]; 
+       grid[index]=nullptr;
 			
       
 		}
     // Delete array
-    grid=nullptr;
+    
     delete[] grid;
-
+    grid=nullptr;
   
 		
 	}
@@ -460,7 +462,7 @@ struct Sensor
 
   bool operator==(Sensor& sensor)
   {
-    return (sensorState==this->sensorState&&this->orientation==sensor.orientation);
+    return (sensor.sensorState==this->sensorState&&this->orientation==sensor.orientation);
   }
 
 };
@@ -490,9 +492,23 @@ class Gene
     } 
     makeGene(position);
     
-
-  
   }
+
+  Gene& operator =(const Gene& gene)
+	{
+		
+		this->gene=gene.gene;
+		return *this;
+	}
+
+
+  Gene(const Gene& gene)
+	{
+		
+		this->gene=gene.gene;
+		
+	}
+  
 	
 
   ~Gene()
@@ -632,6 +648,7 @@ class Robot
     // Make a new robot from two parents
     reproduction(parent1,parent2);
     populateGrid();
+    sensorData();
 		
 		
     //lifetime();
@@ -643,10 +660,12 @@ class Robot
     for(int i=0;i<genome->size();i++)
     {
       delete genome->get(i);
+      
     }
-      grid=nullptr;
+    grid=nullptr;
     delete grid;
 		delete sensor;
+    this->sensor=nullptr;
     
   }
 
@@ -681,7 +700,7 @@ class Robot
     }
 
     delete [] sensorStates;
-		
+    sensorStates=nullptr;
   }
 
   int outputSensorState(int xCoord, int yCoord)
@@ -758,12 +777,30 @@ class Robot
   void reproduction(Robot& parent1,Robot& parent2)
   {
     // splice genes from parent into child
+    //Vector<Gene*>* newGenome= new Vector <Gene*>(16);
+    for(int i=0;i<8;i++)
+    {
+      this->genome->set(i,parent1.genome->get(i));
+      this->genome->set(15-i,parent2.genome->get(15-i));
+      //
+      //mutations(*this);
+    }
+  }
+
+  void mutations(Robot& robot)
+  {
+    RandomNumberGenerator rand;
+    int randomGene= rand(0,14);
+    Gene* gene = new Gene(1);
+    *this->genome->get(randomGene)=*gene;
+    
+    delete gene;
   }
 
   void addGenesToRobot()
   {
     // Adds all 16 genes to the robot
-    int geneSize=15;
+    
     int index=0;
     
     while(index<genome->size())
@@ -778,9 +815,11 @@ class Robot
   void robotUnitTest()
   {
     Robot robot;
-    cout<<robot<<'\n';
+    //cout<<robot<<'\n';
     robot.robotLifeCycle();
-    cout<<robot;
+    Robot robot2;
+    Robot robot3(robot,robot2);
+    cout<<robot3<<endl;
   }
 
   friend ostream& operator <<(ostream& output,Robot& robot)
@@ -895,10 +934,10 @@ class Robot
 
     // Get the most current Sensor Data
     sensorData();
-  
-    bool robotWasMoved; // Stores if the robot has been moved
+
+    bool robotWasMoved=false; // Stores if the robot has been moved
     
-    for(int i=0; i<this->sensor->gene->size();i++)
+    for(int i=0; i<this->genome->size();i++)
     {
      
       if(sensorIsMatched(*this->genome->get(i),*this->sensor))
@@ -917,16 +956,16 @@ class Robot
     {
       // If the robot was not moved move the robot based on the sensor data in the default sensor
       // The default sensor stores the orientation
-      moveBasedOnOrientation(this->genome->get(15)->gene->get(0)->orientation);
+      cout<<"Not Matched: "<<this->genome->get(15)->gene->get(0)->orientation<<endl;
   
     }
 
   }
 
-  int sensorIsMatched(Gene& gene,Gene& sensor)
+  bool sensorIsMatched(Gene& gene,Gene& sensor)
   {
     // Loop through the gene and check if the gene matches with the sensor
-    for(int i=0; i<sensor.gene->size();i++)
+    for(int i=0; i< sensor.gene->size();i++)
     {
       
       bool matched=*gene.gene->get(i)==*sensor.gene->get(i);
