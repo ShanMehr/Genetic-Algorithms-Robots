@@ -475,7 +475,7 @@ class Gene
   
   Gene(int position)
   {
-    if(position<15)
+    if(position<15&&position>=0)
     {
       this->gene= new Vector<Sensor*>(5);
      
@@ -517,6 +517,10 @@ class Gene
         // The fourth gene stores behavior
         if(i<4)
         {
+
+          // O is empty
+          // 1 is wall
+          // 2 is battery
            sensorState=randomNumberGenerator(0,2);
            sensorOrientation=array[i];
 					 
@@ -532,7 +536,7 @@ class Gene
 					
 					sensorState=1;
           sensorOrientation=array[randomNumberGenerator(0,3)];
-          cout<<sensorOrientation<<endl;
+          
         }
         Sensor* sensor= new Sensor(sensorState,sensorOrientation);
         this->gene->set(i,sensor);
@@ -583,7 +587,7 @@ class Robot
 	
   Grid* grid= new Grid(10); // Store the path that the robot moved
   int health=5; // The lifespan of the robot
-  int lifespan=0;
+  int lifespan=0; // Stores how many moves the robot survives for
 	
   // The coordinates of the robot
   int xCoord;
@@ -660,14 +664,15 @@ class Robot
 
   void sensorData()
   {
-    
+
+    // Stores the current Sensor Data
     // Return a 0 code for empty
     // A 1 code for wall 
     // A code 2 for battery
     // Holds all the robots Sensor Readings
 
 
-    int* sensorStates = returnSensorStates(xCoord,yCoord);		
+    int* sensorStates = returnSensorStates(this->xCoord,this->yCoord);		
 		
     for(int i=0;i<this->sensor->gene->size();i++)
 		{
@@ -696,7 +701,7 @@ class Robot
     }
     else
     {
-      return -1;
+      return -9;
     }
     
   }
@@ -718,7 +723,7 @@ class Robot
 		
     sensorStates[2]=outputSensorState(xCoord-1,yCoord);
 		
-    // Sensor reasding at the south of the robot
+    // Sensor reasding at the east of the robot
     sensorStates[3]=outputSensorState(xCoord+1,yCoord);
 			
     return sensorStates;
@@ -727,32 +732,25 @@ class Robot
   
 
   bool positionIsWall(int xCoord,int yCoord)
-  {
-    int gridSize=this->grid->gridSize;
-    return (xCoord>9||yCoord>9||xCoord<0||yCoord<0);
+  { 
+    int gridSize= this->grid->gridSize;
+    return (xCoord>=gridSize||yCoord>=gridSize||xCoord<0||yCoord<0);
   }
 
   bool positionhasBattery(int xCoord, int yCoord)
   {
-    if(!positionIsWall(xCoord, yCoord))
-    {
-      return(this->grid->grid[xCoord][yCoord]=="B");
-    }
-    else
-    {
-      return false;
-    }
+   
+      return(!positionIsWall(xCoord, yCoord)&&this->grid->grid[xCoord][yCoord]=="B");
     
   }
 
   bool positionIsEmpty(int xCoord, int yCoord)
   {
-    bool isWall=positionIsWall(xCoord,yCoord);
-    bool isBattery =positionhasBattery(xCoord,yCoord);
+   
 
-    // return If the position does not have a wall or battery
-    // reutrn if the position has a blank
-    return((!isBattery&&!isWall)||this->grid->grid[xCoord][yCoord]=="");
+    // return true If the position does not have a wall or battery
+    // return true if the position has a blank
+    return((!positionhasBattery(xCoord,yCoord)&&!positionIsWall(xCoord,yCoord))||this->grid->grid[xCoord][yCoord]=="");
   }
 
  
@@ -780,6 +778,7 @@ class Robot
   void robotUnitTest()
   {
     Robot robot;
+    cout<<robot<<'\n';
     robot.robotLifeCycle();
     cout<<robot;
   }
@@ -820,7 +819,7 @@ class Robot
 
 		output<<"East\n";
 		output<<"X-Coordinate: "<<(1+xCoord)<<endl;
-		output<<"Y-Coordinate: "<<robot.yCoord--<<endl;
+		output<<"Y-Coordinate: "<<robot.yCoord<<endl;
 		cout<<"======================\n";
 
 		output<<"Robot Sensor\n"<<*robot.sensor<<'\n';
@@ -893,12 +892,13 @@ class Robot
 
     this->lifespan++; // Increment the lifespan which stores how many turns the robot lived
     this->health--;
+
+    // Get the most current Sensor Data
+    sensorData();
   
     bool robotWasMoved; // Stores if the robot has been moved
     
-
- 
-    for(int i=0; i<this->genome->size()-1;i++)
+    for(int i=0; i<this->sensor->gene->size();i++)
     {
      
       if(sensorIsMatched(*this->genome->get(i),*this->sensor))
@@ -926,7 +926,7 @@ class Robot
   int sensorIsMatched(Gene& gene,Gene& sensor)
   {
     // Loop through the gene and check if the gene matches with the sensor
-    for(int i=0; i<gene.gene->size()-1;i++)
+    for(int i=0; i<sensor.gene->size();i++)
     {
       
       bool matched=*gene.gene->get(i)==*sensor.gene->get(i);
@@ -954,7 +954,7 @@ class Robot
     if(!positionIsWall(xCoord,yCoord))
     {
       
-      this->grid->grid[this->xCoord][this->yCoord]="@";
+      this->grid->grid[this->xCoord][this->yCoord]="!";
       if(positionhasBattery(xCoord,yCoord))
       {
         this->health+=5;
