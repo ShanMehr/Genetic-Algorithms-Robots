@@ -423,15 +423,12 @@ class Grid
 class RandomNumberGenerator
 {
   public:
-  
+  int seed;
 
   int operator()(int lo,int hi)
   {
-   
     // Generates a random number between lo and hi
     //return (rand()% (hi-lo+1))+lo;
-
-
       int random= ( rand()%((hi - lo) + 1) + lo); 
       return random;
   
@@ -469,14 +466,10 @@ struct Sensor
 {
   int sensorState;
   char orientation;
-
-  // Maybe have the manager randomly call randomNumberGenerator
-  //RandomNumberGenerator randomNumberGenerator;
-
   Sensor(char orientation)
   {
     this->orientation=orientation;
-    //this->sensorState=randomNumberGenerator(0,2);
+    
   }
   Sensor(int sensorState,char orientation)
   {
@@ -917,10 +910,8 @@ class Robot
     //cout<<robot2<<endl;
     
     
-    Robot robot3(robot1,robot2,2);
+    Robot robot3(robot1,robot2,1);
     robot3.robotLifeCycle();   
-    cout<<robot3<< endl;
-    robot3.mutateRobot();
     cout<<robot3;
    
     
@@ -984,7 +975,7 @@ class Robot
   {
     // Add a random number to grid
 
-    RandomNumberGenerator rand; // random number functor
+    
     string batteryCell = "B";
     string robotCell = "R";
     int numberOfCells=0;
@@ -1157,6 +1148,7 @@ class Simulation
     population= new Vector<Robot*>(200);
   
     this->numberOfGenerations=200;
+    
   }
 
   Simulation(int size,int numberOfGenerations)
@@ -1202,7 +1194,7 @@ class Simulation
   
   void runSimulation()
   {
-      cout<<"running simulation\n";
+      cout<<"Running simulation...\n";
       // The entire population goes through the track
       addRobots();
       for(int i=0;i<this->numberOfGenerations;i++)
@@ -1228,47 +1220,93 @@ class Simulation
 
   void matePopulation()
   {
-    Vector<Robot*>* nextGenerationPopulation = new Vector<Robot*>(200/2);
-    int loopIndex=0;
-    int indexOfParent=0;
-    while(loopIndex< nextGenerationPopulation->size())
+    // Make the new population size to be 200
+    Vector<Robot*>* nextGenerationPopulation = new Vector<Robot*>;
+    
+    int loopIndex=0;  // Stores what position to add the robots
+    int indexOfParent=0; // Stores what parent is involved in mating
+    int populationSize=this->population->size();
+    EnterKey enter;
+    if(populationSize>0)
     {
+      for(int i=0;i<populationSize;i++)
+      {
+        Robot* parent1 = this->population->get(i);
+        Robot* parent2 = this->population->get(i+1);
+
+        Robot* child1 = new Robot(*parent1,*parent2,1);
+        Robot* child2 = new Robot(*parent1,*parent2,2);
+        
+     
+
+
+        nextGenerationPopulation->add(parent1);
+      
+        nextGenerationPopulation->add(parent1);
+        nextGenerationPopulation->add(child1);
+        nextGenerationPopulation->add(child2);
+        i++;
+       
+      }
+    }
+    
+    /*
+    while(loopIndex<200)
+    {
+   
       // Make a child with the parents with the best genes
       // The two parent robots make two children
       Robot* child1= new Robot(*this->population->get(indexOfParent),*this->population->get(indexOfParent+1),1);
-      Robot* child2= new Robot(*this->population->get(indexOfParent+1),*this->population->get(indexOfParent+1),2);
+      Robot* child2= new Robot(*this->population->get(indexOfParent),*this->population->get(indexOfParent+1),2);
 
       // Add the parents to the next population
       nextGenerationPopulation->set(loopIndex,this->population->get(indexOfParent));     
-       loopIndex++; 
+      loopIndex++; 
       nextGenerationPopulation->set(loopIndex,this->population->get(indexOfParent+1));
       loopIndex++;
-
+      
       // Add the children to the population
       nextGenerationPopulation->set(loopIndex,child1);     
       loopIndex++;
       nextGenerationPopulation->set(loopIndex,child2);     
-      loopIndex++;           
+      loopIndex++;   
+     
+      
+      // Loops 25 times
     }
     // The old population is replaced by the new one;
+    */
+    
     this->population=nextGenerationPopulation;
-
   }
+
+  void breedRobots()
+  {
+   
+  }
+
+  
 
   void naturalSelection()
   {
     // Make a temporary array with size of half the population's size
-    Vector<Robot*>* remainingPopulation = new Vector<Robot*>(this->population->size()/2);
-    for(int i=0;i<this->population->size()/2;i++)
+    EnterKey enter;
+    Vector<Robot*>* remainingPopulation = new Vector<Robot*>(100);
+    for(int i=0;i<100;i++)
     {
       // find the largest
       int largest=findLargest();
+      
       // Add the Robot with the largest fitness
       remainingPopulation->set(i,this->population->get(largest));
+      
       // Remove the current largest from the list
       this->population->remove(largest);
+      
     }
     // Add the largest half of the population to the population array
+    //delete this->population;
+    delete this->population;
     this->population=remainingPopulation;
   }
 
@@ -1279,9 +1317,10 @@ class Simulation
     int index=0;
     for(int i=0;i<this->population->size();i++)
     {
-      if(largest<this->population->get(i)->fitness)
+      if(this->population->get(i)->fitness>largest)
       {
         index=i;
+        largest=this->population->get(i)->fitness;
       }
     }
     return index;
@@ -1291,6 +1330,11 @@ class Simulation
   friend ostream& operator << (ostream& output,Simulation& simulation)
   {
     EnterKey enter;
+    cout<<"Simulation Unit Tests\n";
+    cout<<"Printing the largest robot\n";
+    cout<<*simulation.population->get(simulation.findLargest())<<'\n';
+    enter();
+    system("clear");
     output<<"Population Life Expectancies\n";
     for(int i=0;i<simulation.numberOfGenerations;i++)
     {
@@ -1307,12 +1351,15 @@ class Simulation
     }
     return output;
   }
+
+
   
   void simulationunitTest()
   {
+    cout<<"Simulation Unit Tests\n";
     Simulation simulation(200,1000);
     simulation.runSimulation();
-    cout<<"Simulation Unit Tests\n";
+    
     cout<<simulation<<'\n';
     
     
@@ -1324,11 +1371,22 @@ class Simulation
 void UnitTests();
 void ProgramGreeting();
 int randomNumber();
+void ProgramGreeting();
 
 int main()
 {
+  /*
+  EnterKey enter;
   cout<<"Genetic Algorithm Robots\n";
+  ProgramGreeting();
+  enter();
+  system("clear");
+  Simulation simulation(200,1000);
+  simulation.runSimulation();    
+  cout<<simulation<<'\n';
+  */
   UnitTests();
+  
 
 }
 
@@ -1336,18 +1394,31 @@ int main()
 void UnitTests()
 {
   cout<<"Unit Tests\n";
-  //Vector<int> Vector;
-  //Vector.VectorUnitTest();
-  //Gene gene(1);
-  //gene.GeneUnitTest();
+  /*
+  
+  Vector<int> Vector;
+  Vector.VectorUnitTest();
+  Gene gene(1);
+  gene.GeneUnitTest();
 
   
-  //Grid grid;
-  //grid.gridUnitTest();
+  Grid grid;
+  grid.gridUnitTest();
+  */
   //Robot robot1;
   //robot1.robotUnitTest();
   
   
   Simulation simulation;
   simulation.simulationunitTest();
+  
+}
+void ProgramGreeting()
+{
+  cout<<"Genetic Algorithm Robots\n";
+  cout<<"========================\n";
+  cout<<"Author:Ishan Meher\n";
+  cout<<"Due Date: 12/17/2020\n";
+  cout<<"CISP 400: Final Project\n";
+  cout<<"Testing the effects of evolution on a population of robots by showing how the robot's population gradually improve their ability to collect batteries\n";
 }
