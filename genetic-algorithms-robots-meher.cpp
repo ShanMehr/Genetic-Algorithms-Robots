@@ -423,16 +423,47 @@ class Grid
 class RandomNumberGenerator
 {
   public:
+  
+
   int operator()(int lo,int hi)
   {
+   
     // Generates a random number between lo and hi
     //return (rand()% (hi-lo+1))+lo;
+
 
       int random= ( rand()%((hi - lo) + 1) + lo); 
       return random;
   
   }
 };
+class EnterKey
+{
+  public:
+  void operator()()
+  {
+    // Clears the console and asks the user to press the enter key to contine
+	 int enter=0;
+        
+        cout << "Press Enter key to Continue\n";
+        while (enter==cin.get() )      
+		{
+                if ( enter == (int)'\n' ) 
+                {
+                    
+                    break;
+                }
+                else 
+                {
+                    cout << "Failure, Program Quitting\n";
+                    exit(EXIT_FAILURE);
+                }
+        }
+  
+  }
+
+};
+
 
 struct Sensor
 {
@@ -475,6 +506,7 @@ class Gene
   public:
   // A "gene" has six sensors
   Vector<Sensor*>* gene= new Vector<Sensor*>;
+  RandomNumberGenerator rand;
   
   Gene(int position)
   {
@@ -519,7 +551,7 @@ class Gene
   void makeGene(int position)
   {
     // There are five sensors inside a "gene"
-    RandomNumberGenerator randomNumberGenerator;
+    
 
     char array[] = {'n','s','w','e'};
     char sensorOrientation;
@@ -537,11 +569,12 @@ class Gene
           // O is empty
           // 1 is wall
           // 2 is battery
-           sensorState=randomNumberGenerator(0,2);
+           sensorState=rand(0,2);
            sensorOrientation=array[i];
 					 
           if(position==15)
           {
+            sensorOrientation=array[rand(0,3)];
             sensorState=1;
           }
           
@@ -551,9 +584,10 @@ class Gene
           // The position of the gene that determines the command;
 					
 					sensorState=1;
-          sensorOrientation=array[randomNumberGenerator(0,3)];
+          sensorOrientation=array[rand(0,3)];
           
         }
+
         Sensor* sensor= new Sensor(sensorState,sensorOrientation);
         this->gene->set(i,sensor);
         
@@ -605,6 +639,7 @@ class Robot
   int health=5; // The lifespan of the robot
   int lifespan=0; // Stores how many moves the robot survives for
   int fitness=0;
+  RandomNumberGenerator rand;
 	
   // The coordinates of the robot
   int xCoord;
@@ -647,10 +682,10 @@ class Robot
 		
   }
 
-  Robot(Robot& parent1,Robot& parent2)
+  Robot(Robot& parent1,Robot& parent2,int parity)
   {
     // Make a new robot from two parents
-    reproduction(parent1,parent2);
+    reproduction(parent1,parent2,parity);
     populateGrid();
     sensorData();
 
@@ -760,25 +795,31 @@ class Robot
 
  
 
-  void reproduction(Robot& parent1,Robot& parent2)
+  void reproduction(Robot& parent1,Robot& parent2,int parity)
   {
     // splice genes from parent into child
     //Vector<Gene*>* newGenome= new Vector <Gene*>(16);
-    RandomNumberGenerator rand;
-    int parent1GeneParity= rand(1,2);
-    int parent2GeneParity= rand(1,2);
+   
+   
 
-    Vector<Gene*>* parent1Gene = addGenes(parent1,parent1GeneParity);
-    Vector<Gene*>* parent2Gene= addGenes(parent2,parent2GeneParity);
+    Vector<Gene*>* parent1Gene = addGenes(parent1,parity);
+    Vector<Gene*>* parent2Gene= addGenes(parent2,parity);
 
   int index=0;
    while(index<this->genome->size())
    {
+     
      this->genome->set(index,parent1.genome->get(index));
      this->genome->set(15-index,parent2.genome->get(15-index));
      index+=2;     
+    
    }
-   mutateRobot();
+   if(isMutatable(5))
+   {
+     // 5 percent chance of there being a mutation
+     mutateRobot();
+   }
+   
    delete parent1Gene;
    delete parent2Gene;
    
@@ -798,66 +839,54 @@ class Robot
       {
         if(i%2==1)
         {
-          childGenome->add(robot.genome->get(i));
+          childGenome->set(i,robot.genome->get(i));
         }
       }
       else
       {
-        if(i%2==0)
+        if(parity==2)
         {
-          childGenome->add(robot.genome->get(i));
+          if(i%2==0)
+          {
+            childGenome->set(i,robot.genome->get(i));
+          }
+          
         }
       }
     }
     return childGenome;
   }
 
-
-
   void mutateRobot()
   {
-    RandomNumberGenerator rand;
+    
 
-    int randomGene= rand(0,14);
-    int randomSensor= rand(0,4);
-    char orientations[4] ={'n','s','e','w'};
-    int randomSensorState= rand(0,2);
-   
-    if(randomGene<15)
+    int randomGene= rand(0,15);
+    Gene* gene; // Gene to be added 
+    if(randomGene<15&&randomGene>=0)
     {
+      // If the gene to be mutated is not the last gene
+      // Change the non-default gene
+       gene= new Gene(0);
       
-      if(randomSensor<4)
-      {
-        // If the index of random is between 0 and 3 then only change the sensor state
-        
-        this->genome->get(randomGene)->gene->get(randomSensor)->sensorState=randomSensorState;
-       
-      }
-      else
-      {
-        // If the index of random is 4 then change the sensor
-        char randomSensorOrientation = orientations[rand(0,3)];
-
-       
-        Sensor* sensor = new Sensor(randomSensorState,randomSensorOrientation);
-        this->genome->get(randomGene)->gene->set(4,sensor);
-        
-        delete sensor;
- 
-      }
-    } 
-    else
+    }    
+    else if(randomGene==15)
     {
-      // If the last gene is chosen change the gene since the gene only has one sensor
-      char randomSensorOrientation = orientations[rand(0,3)];
-      Sensor* sensor = new Sensor(randomSensorState,randomSensorOrientation);
-     
-      this->genome->get(15)->gene->set(0,sensor);
-      
-      delete sensor;
-
+      // Change the default action gene
+      gene=new Gene(15);
     }
 
+    this->genome->set(randomGene,gene);
+   
+
+  }
+
+  bool isMutatable(int mutationRate)
+  {
+    // Roll a random number betweewn 0 and 100
+    // If the number is less or equal to the mutation rate then the robot can be mutated
+    int mutation = rand(0,100);
+    return (mutation<=mutationRate);
   }
 
   void addGenesToRobot()
@@ -888,9 +917,12 @@ class Robot
     //cout<<robot2<<endl;
     
     
-    Robot robot3(robot1,robot2);
-    robot3.robotLifeCycle();
-    cout<<robot3<<endl;
+    Robot robot3(robot1,robot2,2);
+    robot3.robotLifeCycle();   
+    cout<<robot3<< endl;
+    robot3.mutateRobot();
+    cout<<robot3;
+   
     
   }
 
@@ -1116,10 +1148,9 @@ class Simulation
   public:
 
   Vector<Robot*>* population;
-  Vector<int> averagePopulationFitness;
+  Vector<double> averagePopulationFitness;
   int numberOfGenerations;
   
-
 
   Simulation()
   {
@@ -1148,7 +1179,7 @@ class Simulation
 
   void storePopulationAverage()
   { 
-    int sum=0;
+    double sum=0;
     for(int i=0;i<this->population->size();i++)
     {
       sum+=this->population->get(i)->fitness;
@@ -1204,8 +1235,8 @@ class Simulation
     {
       // Make a child with the parents with the best genes
       // The two parent robots make two children
-      Robot* child1= new Robot(*this->population->get(indexOfParent),*this->population->get(indexOfParent+1));
-      Robot* child2= new Robot(*this->population->get(indexOfParent+1),*this->population->get(indexOfParent+1));
+      Robot* child1= new Robot(*this->population->get(indexOfParent),*this->population->get(indexOfParent+1),1);
+      Robot* child2= new Robot(*this->population->get(indexOfParent+1),*this->population->get(indexOfParent+1),2);
 
       // Add the parents to the next population
       nextGenerationPopulation->set(loopIndex,this->population->get(indexOfParent));     
@@ -1259,12 +1290,19 @@ class Simulation
 
   friend ostream& operator << (ostream& output,Simulation& simulation)
   {
+    EnterKey enter;
     output<<"Population Life Expectancies\n";
-    for(int i=0;i<simulation.population->size();i++)
+    for(int i=0;i<simulation.numberOfGenerations;i++)
     {
-      cout<<"------------------------\n";
+     
       cout<<"Generation: "<<i<<'\n';     
       output<<"Population Fitness: "<<simulation.averagePopulationFitness.get(i)<<'\n';
+      if(i%100==0)
+      {
+        cout<<"Reached the max size of the console\n";
+        enter();
+        system("clear");
+      }
 
     }
     return output;
@@ -1272,7 +1310,7 @@ class Simulation
   
   void simulationunitTest()
   {
-    Simulation simulation(1000,200);
+    Simulation simulation(200,1000);
     simulation.runSimulation();
     cout<<"Simulation Unit Tests\n";
     cout<<simulation<<'\n';
