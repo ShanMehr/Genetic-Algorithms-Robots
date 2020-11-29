@@ -562,7 +562,8 @@ class Gene
           // O is empty
           // 1 is wall
           // 2 is battery
-           sensorState=rand(0,2);
+          // 3 is not a wall
+           sensorState=rand(0,3);
            sensorOrientation=array[i];
 					 
           if(position==15)
@@ -580,7 +581,8 @@ class Gene
           sensorOrientation=array[rand(0,3)];
           
         }
-
+        
+        
         Sensor* sensor= new Sensor(sensorState,sensorOrientation);
         this->gene->set(i,sensor);
         
@@ -687,13 +689,10 @@ class Robot
 
   ~Robot()
   {
-
     delete genome;
-
     delete grid;
 		delete sensor;
 
-    
   }
 
 
@@ -711,7 +710,6 @@ class Robot
 		
     for(int i=0;i<this->sensor->gene->size();i++)
 		{
-			
       this->sensor->gene->get(i)->sensorState=sensorStates[i];
     }
 
@@ -790,15 +788,12 @@ class Robot
 
   void reproduction(Robot& parent1,Robot& parent2,int parity)
   {
-    // splice genes from parent into child
-    //Vector<Gene*>* newGenome= new Vector <Gene*>(16);
-   
-   
-
+     
+    // get the genes from both parents
     Vector<Gene*>* parent1Gene = addGenes(parent1,parity);
     Vector<Gene*>* parent2Gene= addGenes(parent2,parity);
 
-  int index=0;
+   int index=0;
    while(index<this->genome->size())
    {
      
@@ -868,7 +863,7 @@ class Robot
       // Change the default action gene
       gene=new Gene(15);
     }
-
+    
     this->genome->set(randomGene,gene);
    
 
@@ -1067,11 +1062,15 @@ class Robot
     // Loop through the gene and check if the gene matches with the sensor
     for(int i=0; i< sensor.gene->size();i++)
     {
-      
+      Sensor* geneSensor=gene.gene->get(i);
       bool matched=*gene.gene->get(i)==*sensor.gene->get(i);
       if(matched)
       {
-        
+        // If an exact mathch to the senesor state
+      }
+      else if(geneSensor->sensorState==3&&(sensor.gene->get(i)->sensorState==0||sensor.gene->get(i)->sensorState==2))
+      {
+        // Don't really care if the sensor value is a battery or empty
       }
       else
       {
@@ -1093,7 +1092,7 @@ class Robot
     if(!positionIsWall(xCoord,yCoord))
     {
       
-      this->grid->grid[this->xCoord][this->yCoord]="!";
+      this->grid->grid[this->xCoord][this->yCoord]="#";
       if(positionhasBattery(xCoord,yCoord))
       {
         this->health+=5;
@@ -1142,12 +1141,13 @@ class Simulation
   Vector<double> averagePopulationFitness;
   int numberOfGenerations;
   
+  
 
   Simulation()
   {
     population= new Vector<Robot*>(200);
   
-    this->numberOfGenerations=200;
+    this->numberOfGenerations=1000;
     
   }
 
@@ -1194,9 +1194,9 @@ class Simulation
   
   void runSimulation()
   {
-      cout<<"Running simulation...\n";
       // The entire population goes through the track
       addRobots();
+      cout<<"Running simulation...\n";
       for(int i=0;i<this->numberOfGenerations;i++)
       { 
         runPopulationSimulation();
@@ -1204,6 +1204,10 @@ class Simulation
         naturalSelection();
         matePopulation();
       }
+      cout<<"Simulation Loaded\n";
+      EnterKey enter;
+      enter();
+      system("clear");
       
   }
 
@@ -1220,7 +1224,7 @@ class Simulation
 
   void matePopulation()
   {
-    // Make the new population size to be 200
+   
     Vector<Robot*>* nextGenerationPopulation = new Vector<Robot*>;
     
     int loopIndex=0;  // Stores what position to add the robots
@@ -1237,11 +1241,7 @@ class Simulation
         Robot* child1 = new Robot(*parent1,*parent2,1);
         Robot* child2 = new Robot(*parent1,*parent2,2);
         
-     
-
-
         nextGenerationPopulation->add(parent1);
-      
         nextGenerationPopulation->add(parent1);
         nextGenerationPopulation->add(child1);
         nextGenerationPopulation->add(child2);
@@ -1250,32 +1250,7 @@ class Simulation
       }
     }
     
-    /*
-    while(loopIndex<200)
-    {
    
-      // Make a child with the parents with the best genes
-      // The two parent robots make two children
-      Robot* child1= new Robot(*this->population->get(indexOfParent),*this->population->get(indexOfParent+1),1);
-      Robot* child2= new Robot(*this->population->get(indexOfParent),*this->population->get(indexOfParent+1),2);
-
-      // Add the parents to the next population
-      nextGenerationPopulation->set(loopIndex,this->population->get(indexOfParent));     
-      loopIndex++; 
-      nextGenerationPopulation->set(loopIndex,this->population->get(indexOfParent+1));
-      loopIndex++;
-      
-      // Add the children to the population
-      nextGenerationPopulation->set(loopIndex,child1);     
-      loopIndex++;
-      nextGenerationPopulation->set(loopIndex,child2);     
-      loopIndex++;   
-     
-      
-      // Loops 25 times
-    }
-    // The old population is replaced by the new one;
-    */
     
     this->population=nextGenerationPopulation;
   }
@@ -1291,8 +1266,12 @@ class Simulation
   {
     // Make a temporary array with size of half the population's size
     EnterKey enter;
-    Vector<Robot*>* remainingPopulation = new Vector<Robot*>(100);
-    for(int i=0;i<100;i++)
+    int populationSize=this->population->size()/2;
+    if(populationSize>0)
+    {
+    Vector<Robot*>* remainingPopulation = new Vector<Robot*>(populationSize);
+    
+    for(int i=0;i<populationSize;i++)
     {
       // find the largest
       int largest=findLargest();
@@ -1308,6 +1287,7 @@ class Simulation
     //delete this->population;
     delete this->population;
     this->population=remainingPopulation;
+  }
   }
 
   int findLargest()
@@ -1372,23 +1352,27 @@ void UnitTests();
 void ProgramGreeting();
 int randomNumber();
 void ProgramGreeting();
+void enterKey();
 
 int main()
 {
-  /*
-  EnterKey enter;
-  cout<<"Genetic Algorithm Robots\n";
   ProgramGreeting();
-  enter();
+  enterKey();
   system("clear");
-  Simulation simulation(200,1000);
-  simulation.runSimulation();    
-  cout<<simulation<<'\n';
-  */
-  UnitTests();
+  enterKey();
+  system("clear");
+  Simulation* simulation= new Simulation(200,10000);
+  simulation->runSimulation();    
+  cout<<*simulation<<'\n';
+  //UnitTests();
+  delete simulation;
+  
+ 
   
 
 }
+
+
 
 
 void UnitTests()
@@ -1409,8 +1393,8 @@ void UnitTests()
   //robot1.robotUnitTest();
   
   
-  Simulation simulation;
-  simulation.simulationunitTest();
+  //Simulation simulation;
+  //simulation.simulationunitTest();
   
 }
 void ProgramGreeting()
@@ -1422,3 +1406,26 @@ void ProgramGreeting()
   cout<<"CISP 400: Final Project\n";
   cout<<"Testing the effects of evolution on a population of robots by showing how the robot's population gradually improve their ability to collect batteries\n";
 }
+
+
+void enterKey()
+  {
+    // Clears the console and asks the user to press the enter key to contine
+	 int enter=0;
+        
+        cout << "Press Enter key to Continue\n";
+        while (enter==cin.get() )      
+		{
+                if ( enter == (int)'\n' ) 
+                {
+                    
+                    break;
+                }
+                else 
+                {
+                    cout << "Failure, Program Quitting\n";
+                    exit(EXIT_FAILURE);
+                }
+        }
+  
+  }
