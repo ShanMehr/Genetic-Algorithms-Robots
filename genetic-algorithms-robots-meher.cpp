@@ -423,17 +423,19 @@ class Grid
 class RandomNumberGenerator
 {
   public:
-  int seed;
-
+ 
+ 
   int operator()(int lo,int hi)
   {
     // Generates a random number between lo and hi
     //return (rand()% (hi-lo+1))+lo;
+    
       int random= ( rand()%((hi - lo) + 1) + lo); 
       return random;
   
   }
 };
+
 class EnterKey
 {
   public:
@@ -1068,7 +1070,7 @@ class Robot
       {
         // If an exact mathch to the senesor state
       }
-      else if(geneSensor->sensorState==3&&(sensor.gene->get(i)->sensorState==0||sensor.gene->get(i)->sensorState==2))
+      else if(geneSensor->sensorState==3&&(sensor.gene->get(i)->sensorState==0||sensor.gene->get(i)->sensorState==2||sensor.gene->get(i)->sensorState==3))
       {
         // Don't really care if the sensor value is a battery or empty
       }
@@ -1227,10 +1229,7 @@ class Simulation
    
     Vector<Robot*>* nextGenerationPopulation = new Vector<Robot*>;
     
-    int loopIndex=0;  // Stores what position to add the robots
-    int indexOfParent=0; // Stores what parent is involved in mating
     int populationSize=this->population->size();
-    EnterKey enter;
     if(populationSize>0)
     {
       for(int i=0;i<populationSize;i++)
@@ -1265,7 +1264,7 @@ class Simulation
   void naturalSelection()
   {
     // Make a temporary array with size of half the population's size
-    EnterKey enter;
+    
     int populationSize=this->population->size()/2;
     if(populationSize>0)
     {
@@ -1319,7 +1318,7 @@ class Simulation
     for(int i=0;i<simulation.numberOfGenerations;i++)
     {
      
-      cout<<"Generation: "<<i<<'\n';     
+      cout<<"Generation: "<<i+1<<'\n';     
       output<<"Population Fitness: "<<simulation.averagePopulationFitness.get(i)<<'\n';
       if(i%100==0)
       {
@@ -1347,6 +1346,8 @@ class Simulation
 
 };
 
+
+
 // Function Prototypes
 void UnitTests();
 void ProgramGreeting();
@@ -1361,14 +1362,11 @@ int main()
   system("clear");
   enterKey();
   system("clear");
-  Simulation* simulation= new Simulation(200,10000);
-  simulation->runSimulation();    
-  cout<<*simulation<<'\n';
-  //UnitTests();
-  delete simulation;
-  
- 
-  
+  Simulation simulation(200,10000);
+  //Simulation simulation(200,5000);
+  simulation.runSimulation();    
+  cout<<simulation<<'\n';
+  UnitTests();
 
 }
 
@@ -1378,17 +1376,16 @@ int main()
 void UnitTests()
 {
   cout<<"Unit Tests\n";
-  /*
   
-  Vector<int> Vector;
-  Vector.VectorUnitTest();
-  Gene gene(1);
-  gene.GeneUnitTest();
-
   
-  Grid grid;
-  grid.gridUnitTest();
-  */
+  //Vector<int> Vector;
+  //Vector.VectorUnitTest();
+  //Gene gene(1);
+  //gene.GeneUnitTest();
+  
+  //Grid grid;
+  //grid.gridUnitTest();
+  
   //Robot robot1;
   //robot1.robotUnitTest();
   
@@ -1399,6 +1396,7 @@ void UnitTests()
 }
 void ProgramGreeting()
 {
+  srand(time(0));
   cout<<"Genetic Algorithm Robots\n";
   cout<<"========================\n";
   cout<<"Author:Ishan Meher\n";
