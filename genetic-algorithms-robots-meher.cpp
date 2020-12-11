@@ -1171,6 +1171,7 @@ class Simulation
     {
       // Make sure the population is even and not zero
       population= new Vector<Robot*>(size);
+
     
       this->numberOfGenerations=numberOfGenerations;
     }
@@ -1239,12 +1240,11 @@ class Simulation
   void matePopulation()
   {
    
-    Vector<Robot*>* nextGenerationPopulation = new Vector<Robot*>;
+    Vector<Robot*>* nextGenerationPopulation = new Vector<Robot*>(200);
     
     int loopIndex=0;  // Stores what position to add the robots
     int indexOfParent=0; // Stores what parent is involved in mating
     int populationSize=this->population->size();
-    EnterKey enter;
     if(populationSize>0)
     {
       for(int i=0;i<populationSize;i++)
@@ -1258,11 +1258,16 @@ class Simulation
         Robot* child1 = new Robot(*parent1,*parent2,1);
         Robot* child2 = new Robot(*parent1,*parent2,2);
         
-        nextGenerationPopulation->add(parent1);
-        nextGenerationPopulation->add(parent1);
-        nextGenerationPopulation->add(child1);
-        nextGenerationPopulation->add(child2);
+        nextGenerationPopulation->set(loopIndex,parent1);
+        loopIndex++;
+        nextGenerationPopulation->set(loopIndex,parent1);
+        loopIndex++;
+        nextGenerationPopulation->set(loopIndex,child1);
+        loopIndex++;
+        nextGenerationPopulation->set(loopIndex,child2);
+        loopIndex++;
         i++;
+       
        
       }
     }
@@ -1366,9 +1371,7 @@ class Simulation
     
   }
 
-};
-
-// Function Prototypes
+};1000
 void UnitTests();
 void ProgramGreeting();
 int randomNumber();
@@ -1385,7 +1388,7 @@ int main()
   Simulation simulation(200,10000);
   simulation.runSimulation();    
   cout<<simulation<<'\n';
-  UnitTests();
+  //UnitTests();
 
 }
 
