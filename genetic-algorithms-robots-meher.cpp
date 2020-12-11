@@ -97,9 +97,9 @@ class Vector
 			return *this;
 		} 
 
-    Vector(Vector& vector)
+       Vector(Vector& vector)
 		{	
-      delete this->array;
+            	delete this->array;
       this->array=vector.array;
 		}
 
@@ -286,7 +286,6 @@ class Grid
 
 	Grid()
 	{
-    // Set the grid suze to 10
 		this->gridSize=10;
 		this->grid=make2DArray(10);
     
@@ -400,13 +399,9 @@ class Grid
 
 	string** make2DArray(const int gridSize)
 	{
-    // Makes a new 2D array
 		string** array;
     
-    
 		array= new string*[gridSize];
-
-    // Add Rows to the grid
   
 		for(int index=0;index<this->gridSize;index++)
 		{
@@ -473,7 +468,6 @@ struct Sensor
 {
   int sensorState;
   char orientation;
-
   Sensor(char orientation)
   {
     this->orientation=orientation;
@@ -530,7 +524,7 @@ class Gene
 
   Gene& operator =(const Gene& gene)
 	{
-		delete this->gene;
+		
 		this->gene=gene.gene;
 		return *this;
 	}
@@ -538,7 +532,7 @@ class Gene
 
   Gene(const Gene& gene)
 	{
-    delete this->gene;
+		
 		this->gene=gene.gene;
 		
 	}
@@ -604,7 +598,17 @@ class Gene
   {
     Gene gene(1);
     cout<<"Gene Unit Test\n";
+    for(int i=0;i<gene.gene->size();i++)
+    {
+      //printGene(i);
+    }
+
     cout<<gene;
+  }
+
+  void printGene(int index)
+  {
+    cout<<"Sensor: "<<index<<"\n"<<*this->gene->get(index);
   }
 
   friend ostream& operator <<(ostream& output,Gene& gene)
@@ -631,7 +635,7 @@ class Robot
   Grid* grid= new Grid(10); // Store the path that the robot moved
   int health=5; // The lifespan of the robot
   int lifespan=0; // Stores how many moves the robot survives for
-  int fitness=0; // Stores the number of batteries that the robot collected
+  int fitness=0;
   RandomNumberGenerator rand;
 	
   // The coordinates of the robot
@@ -640,10 +644,7 @@ class Robot
 
 	Robot& operator =(const Robot& robot)
 	{
-		delete this->genome;
-    delete this->sensor;
-    delete this->grid;
-
+		
 		this->lifespan= robot.lifespan;
     this->fitness=robot.fitness;
 		this->xCoord=robot.xCoord;
@@ -657,10 +658,6 @@ class Robot
   Robot(const Robot& robot)
 	{
 		
-		delete this->genome;
-    delete this->sensor;
-    delete this->grid;
-
 		this->lifespan= robot.lifespan;
     this->fitness=robot.fitness;
 		this->xCoord=robot.xCoord;
@@ -669,13 +666,6 @@ class Robot
 		this->sensor= robot.sensor;
 		
 	}
-
-  void reset()
-  {
-    this->lifespan=0;
-    this->fitness=0;
-    this->health=5;
-  }
 
 
   Robot()
@@ -695,6 +685,7 @@ class Robot
     reproduction(parent1,parent2,parity);
     populateGrid();
     sensorData();
+
     
   }
 
@@ -703,6 +694,7 @@ class Robot
     delete genome;
     delete grid;
 		delete sensor;
+
   }
 
 
@@ -718,7 +710,6 @@ class Robot
 
     int* sensorStates = returnSensorStates(this->xCoord,this->yCoord);		
 		
-    
     for(int i=0;i<this->sensor->gene->size();i++)
 		{
       this->sensor->gene->get(i)->sensorState=sensorStates[i];
@@ -855,7 +846,6 @@ class Robot
     }
     return childGenome;
   }
-
 
   void mutateRobot()
   {
@@ -1054,8 +1044,7 @@ class Robot
         moveBasedOnOrientation(this->genome->get(i)->gene->get(4)->orientation);
                   
         // Move the robot according to the instruction of the movement code if the movement is a valid position
-        robotWasMoved=true;
-        break; 
+        robotWasMoved=true;        
       } 
     }
 
@@ -1064,7 +1053,7 @@ class Robot
       // If the robot was not moved move the robot based on the sensor data in the default sensor
       // The default sensor stores the orientation
       moveBasedOnOrientation( this->genome->get(15)->gene->get(0)->orientation);
-     
+     ;
   
     }
 
@@ -1081,7 +1070,7 @@ class Robot
       {
         // If an exact mathch to the senesor state
       }
-      else if(geneSensor->sensorState==3&&(sensor.gene->get(i)->sensorState==0||sensor.gene->get(i)->sensorState==2||sensor.gene->get(i)->sensorState==1))
+      else if(geneSensor->sensorState==3&&(sensor.gene->get(i)->sensorState==0||sensor.gene->get(i)->sensorState==2||sensor.gene->get(i)->sensorState==3))
       {
         // Don't really care if the sensor value is a battery or empty
       }
@@ -1158,7 +1147,6 @@ class Simulation
 
   Simulation()
   {
-
     population= new Vector<Robot*>(200);
   
     this->numberOfGenerations=1000;
@@ -1171,7 +1159,6 @@ class Simulation
     {
       // Make sure the population is even and not zero
       population= new Vector<Robot*>(size);
-
     
       this->numberOfGenerations=numberOfGenerations;
     }
@@ -1231,7 +1218,7 @@ class Simulation
     //cout<<"running simulation on population\n";
     for(int i=0;i<this->population->size();i++)
     {
-      this->population->get(i)->reset();
+    
       this->population->get(i)->robotLifeCycle();
       
     }
@@ -1240,34 +1227,24 @@ class Simulation
   void matePopulation()
   {
    
-    Vector<Robot*>* nextGenerationPopulation = new Vector<Robot*>(200);
+    Vector<Robot*>* nextGenerationPopulation = new Vector<Robot*>;
     
-    int loopIndex=0;  // Stores what position to add the robots
-    int indexOfParent=0; // Stores what parent is involved in mating
     int populationSize=this->population->size();
     if(populationSize>0)
     {
       for(int i=0;i<populationSize;i++)
       {
         Robot* parent1 = this->population->get(i);
-       
         Robot* parent2 = this->population->get(i+1);
-        
-        
 
         Robot* child1 = new Robot(*parent1,*parent2,1);
         Robot* child2 = new Robot(*parent1,*parent2,2);
         
-        nextGenerationPopulation->set(loopIndex,parent1);
-        loopIndex++;
-        nextGenerationPopulation->set(loopIndex,parent1);
-        loopIndex++;
-        nextGenerationPopulation->set(loopIndex,child1);
-        loopIndex++;
-        nextGenerationPopulation->set(loopIndex,child2);
-        loopIndex++;
+        nextGenerationPopulation->add(parent1);
+        nextGenerationPopulation->add(parent1);
+        nextGenerationPopulation->add(child1);
+        nextGenerationPopulation->add(child2);
         i++;
-       
        
       }
     }
@@ -1287,7 +1264,7 @@ class Simulation
   void naturalSelection()
   {
     // Make a temporary array with size of half the population's size
-    EnterKey enter;
+    
     int populationSize=this->population->size()/2;
     if(populationSize>0)
     {
@@ -1332,29 +1309,25 @@ class Simulation
   friend ostream& operator << (ostream& output,Simulation& simulation)
   {
     EnterKey enter;
-    output<<"Simulation Unit Tests\n";
-    output<<simulation.population->size()<<endl;
-    output<<"Printing the largest robot\n";
-    
-    output<<*simulation.population->get(simulation.findLargest())<<'\n';
+    cout<<"Simulation Unit Tests\n";
+    cout<<"Printing the largest robot\n";
+    cout<<*simulation.population->get(simulation.findLargest())<<'\n';
     enter();
     system("clear");
     output<<"Population Life Expectancies\n";
     for(int i=0;i<simulation.numberOfGenerations;i++)
     {
      
-      output<<"Generation: "<<i+1<<'\n';     
+      cout<<"Generation: "<<i+1<<'\n';     
       output<<"Population Fitness: "<<simulation.averagePopulationFitness.get(i)<<'\n';
       if(i%100==0)
       {
-        output<<"Reached the max size of the console\n";
+        cout<<"Reached the max size of the console\n";
         enter();
         system("clear");
       }
-    
+
     }
-    output<<"Printing all the Robot's\n";
-   
     return output;
   }
 
@@ -1371,7 +1344,11 @@ class Simulation
     
   }
 
-};1000
+};
+
+
+
+// Function Prototypes
 void UnitTests();
 void ProgramGreeting();
 int randomNumber();
@@ -1386,9 +1363,10 @@ int main()
   enterKey();
   system("clear");
   Simulation simulation(200,10000);
+  //Simulation simulation(200,5000);
   simulation.runSimulation();    
   cout<<simulation<<'\n';
-  //UnitTests();
+  UnitTests();
 
 }
 
