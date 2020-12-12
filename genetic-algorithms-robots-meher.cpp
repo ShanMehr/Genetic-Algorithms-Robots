@@ -275,40 +275,38 @@ class Vector
 class Grid
 {	
 	public:
-	int gridSize;
+	int gridXSize;
+  int gridYSize;
 	string** grid;
 	
 	Grid(const int gridSize)
 	{
-		this->gridSize=gridSize;
-		this->grid=make2DArray(gridSize);
+		this->gridXSize=gridSize;
+    this->gridYSize=gridSize;
+		this->grid=make2DArray();
 	}
 
 	Grid()
 	{
-		this->gridSize=10;
-		this->grid=make2DArray(10);
+		this->gridXSize=10;
+    this->gridYSize=10;
+		this->grid=make2DArray();
     
 	} 
 
+  Grid(int xSize,int ySize)
+  {
+    	this->gridXSize=xSize;
+    this->gridYSize=ySize;
+		this->grid=make2DArray();
+  }
+
 	~Grid()
 	{
-    /*
-		for(int index=0;index<gridSize;index++)
-		{
-      // Delete all the columns of the array
-     
-      delete grid[index]; 
-       //grid[index]=nullptr;
-			
-      
-		}
-    */
-    // Delete array
+    
     
     delete[] grid;
-    //grid=nullptr;
-  
+ 
 		
 	}
 
@@ -320,9 +318,9 @@ class Grid
   friend ostream& operator <<(ostream& output, Grid& grid)
   {
     output<<"==============================\n";
-    for(int i=0;i<grid.gridSize;i++)
+    for(int i=0;i<grid.gridXSize;i++)
     {
-      for(int j=0;j<grid.gridSize;j++)
+      for(int j=0;j<grid.gridYSize;j++)
       {
         if(grid.grid[i][j]=="")
         {
@@ -354,9 +352,9 @@ class Grid
     cout<<"Testing the Default constructor"<<'\n';
     Grid defaultGrid;
     cout<<"Also testing the addition of an string to the grid\n";
-    for(int i=0;i<defaultGrid.gridSize;i++)
+    for(int i=0;i<defaultGrid.gridXSize;i++)
     {
-      for(int j=0;j<defaultGrid.gridSize;j++)
+      for(int j=0;j<defaultGrid.gridYSize;j++)
       {
         string row= to_string(i);
         string col= to_string(j+1);
@@ -374,9 +372,9 @@ class Grid
   void printGrid()
   {
     
-    for(int i=0;i<gridSize;i++)
+    for(int i=0;i<gridXSize;i++)
     {
-      for(int j=0;j<gridSize;j++)
+      for(int j=0;j<gridYSize;j++)
       {
         cout<<grid[i][j];
       }
@@ -388,7 +386,7 @@ class Grid
  
   void addToPosition(int row,int column,string text)
   {
-    if(row<gridSize&&column<gridSize)
+    if(row<gridXSize&&column<gridYSize)
     {
       string textValue=text;
       grid[row][column]=textValue;
@@ -397,19 +395,20 @@ class Grid
 
 	public:
 
-	string** make2DArray(const int gridSize)
+	string** make2DArray()
 	{
 		string** array;
     
-		array= new string*[gridSize];
+		array= new string*[this->gridXSize];
   
-		for(int index=0;index<this->gridSize;index++)
+		for(int index=0;index<this->gridXSize;index++)
 		{
-			array[index]= new string[gridSize];
+			array[index]= new string[this->gridYSize];
       
 		}
     return array;
 	}
+
 
 	string getValue(int x,int y)
 	{
@@ -764,11 +763,17 @@ class Robot
     return sensorStates;
 		
   }
-  
+  void reset()
+  {
+    this->lifespan=0;
+    this->fitness=0;
+    this->health=5;
+  }
+
 
   bool positionIsWall(int xCoord,int yCoord)
   { 
-    int gridSize= this->grid->gridSize;
+    int gridSize= this->grid->gridXSize;
     return (xCoord>=gridSize||yCoord>=gridSize||xCoord<0||yCoord<0);
   }
 
@@ -1218,7 +1223,7 @@ class Simulation
     //cout<<"running simulation on population\n";
     for(int i=0;i<this->population->size();i++)
     {
-    
+      this->population->get(i)->reset();
       this->population->get(i)->robotLifeCycle();
       
     }
@@ -1254,39 +1259,33 @@ class Simulation
     this->population=nextGenerationPopulation;
   }
 
-  void breedRobots()
-  {
-   
-  }
-
   
-
   void naturalSelection()
   {
-    // Make a temporary array with size of half the population's size
-    
-    int populationSize=this->population->size()/2;
-    if(populationSize>0)
-    {
-    Vector<Robot*>* remainingPopulation = new Vector<Robot*>(populationSize);
-    
-    for(int i=0;i<populationSize;i++)
-    {
-      // find the largest
-      int largest=findLargest();
+      // Make a temporary array with size of half the population's size
       
-      // Add the Robot with the largest fitness
-      remainingPopulation->set(i,this->population->get(largest));
+      int populationSize=this->population->size()/2;
+      if(populationSize>0)
+      {
+      Vector<Robot*>* remainingPopulation = new Vector<Robot*>(populationSize);
       
-      // Remove the current largest from the list
-      this->population->remove(largest);
-      
+      for(int i=0;i<populationSize;i++)
+      {
+        // find the largest
+        int largest=findLargest();
+        
+        // Add the Robot with the largest fitness
+        remainingPopulation->set(i,this->population->get(largest));
+        
+        // Remove the current largest from the list
+        this->population->remove(largest);
+        
+      }
+      // Add the largest half of the population to the population array
+      //delete this->population;
+      delete this->population;
+      this->population=remainingPopulation;
     }
-    // Add the largest half of the population to the population array
-    //delete this->population;
-    delete this->population;
-    this->population=remainingPopulation;
-  }
   }
 
   int findLargest()
@@ -1331,6 +1330,34 @@ class Simulation
     return output;
   }
 
+void savePopulationData()
+  {
+     ofstream outputFile;
+        
+        // opens the file
+        outputFile.open("populationData-ishanmeher.txt");
+        cout<<"Writing the data of the list to the file\n";     
+        
+        // Saves the length of the list to the file
+        // Used to determine how many objects are read when the program runs again
+        outputFile<<"Average Population Fitness\n";
+        outputFile<<"Copy and Paste contents below into a spreadsheet program for to see a graph\n";
+        outputFile<<"============================================================================\n";
+
+        
+
+        // Loops through the array and adds the contents of each object
+        for(int index=0; index<this->numberOfGenerations;index++)
+        {
+         
+         
+          outputFile<<this->averagePopulationFitness.get(index)<<'\n';
+              
+          
+        }
+        
+        outputFile.close();
+  }
 
   
   void simulationunitTest()
@@ -1360,14 +1387,11 @@ int main()
   ProgramGreeting();
   enterKey();
   system("clear");
-  enterKey();
-  system("clear");
-  Simulation simulation(200,10000);
-  //Simulation simulation(200,5000);
-  simulation.runSimulation();    
-  cout<<simulation<<'\n';
   UnitTests();
-
+  Simulation simulation(200,5000);
+  simulation.runSimulation();
+  simulation.savePopulationData();       
+  cout<<simulation<<'\n';
 }
 
 
@@ -1378,22 +1402,35 @@ void UnitTests()
   cout<<"Unit Tests\n";
   
   
-  //Vector<int> Vector;
-  //Vector.VectorUnitTest();
-  //Gene gene(1);
-  //gene.GeneUnitTest();
+  Vector<int> Vector;
+  Vector.VectorUnitTest();
   
-  //Grid grid;
-  //grid.gridUnitTest();
+  enterKey();
+  system("clear");
+
+  Gene gene(1);
+  gene.GeneUnitTest();
+  enterKey();
+  system("clear");
   
-  //Robot robot1;
-  //robot1.robotUnitTest();
+  Grid grid;
+  grid.gridUnitTest();
+  enterKey();
+  system("clear");
+
+  Robot robot1;
+  robot1.robotUnitTest();
+  enterKey();
+  system("clear");
   
   
-  //Simulation simulation;
-  //simulation.simulationunitTest();
+  Simulation simulation;
+  simulation.simulationunitTest();
+  enterKey();
+  system("clear");
   
 }
+
 void ProgramGreeting()
 {
   srand(time(0));
