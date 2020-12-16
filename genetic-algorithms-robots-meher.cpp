@@ -1168,6 +1168,7 @@ class Simulation
   Vector<Robot*>* population;
   Vector<double> averagePopulationFitness;
   int numberOfGenerations;
+  EnterKey enter;
   
   
 
@@ -1232,9 +1233,7 @@ class Simulation
         naturalSelection();
         matePopulation();
       }
-      cout<<"Simulation Loaded\n";
-      EnterKey enter;
-      enter();
+      
       system("clear");
       
   }
@@ -1247,7 +1246,9 @@ class Simulation
       
       this->population->get(i)->reset();
       this->population->get(i)->robotLifeCycle();
+      
     }
+  
          
   }
 
@@ -1298,8 +1299,6 @@ class Simulation
         
         // Add the Robot with the largest fitness
         remainingPopulation->set(i,this->population->get(largest));
-        cout<<"Robot"<<i<<" fitness:"<<this->population->get(largest)->fitness<<endl;
-         
         
         // Remove the current largest from the list
         this->population->remove(largest);
@@ -1308,9 +1307,7 @@ class Simulation
          
         
       }
-      EnterKey enter;
-       enter();
-        system("clear");
+      
 
       // Add the largest half of the population to the population array
       //delete this->population;
@@ -1418,8 +1415,8 @@ int main()
   ProgramGreeting();
   enterKey();
   system("clear");
-  //UnitTests();
-  Simulation* simulation= new Simulation(200,1000);
+  UnitTests();
+  Simulation* simulation= new Simulation(200,5000);
   simulation->runSimulation();
   simulation->savePopulationData();       
   cout<<*simulation<<'\n';
