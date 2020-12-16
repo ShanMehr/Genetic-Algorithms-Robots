@@ -211,6 +211,8 @@ class Vector
 			// Tests various functions of the Vector Class
 
 			Vector<string> array;
+
+      cout<<"Vector Unit Test\n";
 			cout<<"Printing Initial Size:\n"<<array.size()<<'\n';
 			cout<<"Adding an element:\n";
 			array.add("Ishan Meher");
@@ -765,9 +767,15 @@ class Robot
   }
   void reset()
   {
+   
     this->lifespan=0;
     this->fitness=0;
     this->health=5;
+    delete this->grid;
+    Grid* grid = new Grid();
+    this->grid=grid;
+    populateGrid();
+    sensorData();
   }
 
 
@@ -1030,9 +1038,7 @@ class Robot
       If the sensor is matched then the gene that is matched last sensor is used for movement
     */
 
-    this->lifespan++; // Increment the lifespan which stores how many turns the robot lived
-    this->health--;
-
+    
     // Get the most current Sensor Data
     sensorData();
 
@@ -1050,6 +1056,7 @@ class Robot
                   
         // Move the robot according to the instruction of the movement code if the movement is a valid position
         robotWasMoved=true;        
+        break;
       } 
     }
 
@@ -1058,9 +1065,13 @@ class Robot
       // If the robot was not moved move the robot based on the sensor data in the default sensor
       // The default sensor stores the orientation
       moveBasedOnOrientation( this->genome->get(15)->gene->get(0)->orientation);
-     ;
+     
   
     }
+    
+    this->lifespan++; // Increment the lifespan which stores how many turns the robot lived
+    this->health--;
+
 
   }
 
@@ -1099,7 +1110,17 @@ class Robot
     if(!positionIsWall(xCoord,yCoord))
     {
       
-      this->grid->grid[this->xCoord][this->yCoord]="#";
+      if(lifespan==0)
+      {
+        this->grid->grid[this->xCoord][this->yCoord]="S";
+
+      }
+      else
+      {
+        this->grid->grid[this->xCoord][this->yCoord]="#";
+      }
+      
+    
       if(positionhasBattery(xCoord,yCoord))
       {
         this->health+=5;
@@ -1223,10 +1244,11 @@ class Simulation
     //cout<<"running simulation on population\n";
     for(int i=0;i<this->population->size();i++)
     {
+      
       this->population->get(i)->reset();
       this->population->get(i)->robotLifeCycle();
-      
     }
+         
   }
 
   void matePopulation()
@@ -1276,11 +1298,20 @@ class Simulation
         
         // Add the Robot with the largest fitness
         remainingPopulation->set(i,this->population->get(largest));
+        cout<<"Robot"<<i<<" fitness:"<<this->population->get(largest)->fitness<<endl;
+         
         
         // Remove the current largest from the list
         this->population->remove(largest);
         
+
+         
+        
       }
+      EnterKey enter;
+       enter();
+        system("clear");
+
       // Add the largest half of the population to the population array
       //delete this->population;
       delete this->population;
@@ -1360,10 +1391,10 @@ void savePopulationData()
   }
 
   
-  void simulationunitTest()
+  static void simulationunitTest()
   {
     cout<<"Simulation Unit Tests\n";
-    Simulation simulation(200,1000);
+    Simulation simulation(200,1);
     simulation.runSimulation();
     
     cout<<simulation<<'\n';
@@ -1387,11 +1418,12 @@ int main()
   ProgramGreeting();
   enterKey();
   system("clear");
-  UnitTests();
-  Simulation simulation(200,5000);
-  simulation.runSimulation();
-  simulation.savePopulationData();       
-  cout<<simulation<<'\n';
+  //UnitTests();
+  Simulation* simulation= new Simulation(200,1000);
+  simulation->runSimulation();
+  simulation->savePopulationData();       
+  cout<<*simulation<<'\n';
+  
 }
 
 
@@ -1422,10 +1454,8 @@ void UnitTests()
   robot1.robotUnitTest();
   enterKey();
   system("clear");
-  
-  
-  Simulation simulation;
-  simulation.simulationunitTest();
+ 
+  Simulation::simulationunitTest();
   enterKey();
   system("clear");
   
