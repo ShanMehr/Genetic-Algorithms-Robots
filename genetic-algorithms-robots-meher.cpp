@@ -514,13 +514,14 @@ struct Sensor
     this->orientation=orientation;
   }
   
-  // 
+  // Constructor that sets the sensorState and the sensor's orientation
   Sensor(int sensorState,char orientation)
   {
     this->orientation=orientation;
     this->sensorState=sensorState;
   }
   
+  // Overloading the << operator to print the sensor data
   friend ostream& operator << (ostream& output,Sensor& sensor)
   {
     output<<"Sensor State: "<<sensor.sensorState<<'\n';
@@ -528,6 +529,7 @@ struct Sensor
     return output;
   }
 
+  // Overloading the == operator to compare two sensors
   bool operator==(Sensor& sensor)
   {
     return (sensor.sensorState==this->sensorState&&this->orientation==sensor.orientation);
@@ -535,25 +537,33 @@ struct Sensor
 };
 
 
-
+/**
+ * Gene Class
+ * Used to store the genes of the robot
+ * The genes are the instructions that the robot will follow
+ * The genes are stored in a Vector of Sensor structs
+ */
 class Gene
 {
   public:
-  // A "gene" has six sensors
-  Vector<Sensor*>* gene= new Vector<Sensor*>;
-  RandomNumberGenerator rand;
+  // A "gene" has a vector of sensors
+  Vector<Sensor*>* gene= new Vector<Sensor*>; // The gene is an array of Sensor structs
+  RandomNumberGenerator rand; // Instantiate the random number generator to generate random numbers
   
+  // Constructor for the ith gene where i is between 0 and 15 (There are 16 genes)
   Gene(int position)
   {
+    // The 1st-15th gene have 5 sensors 
     if(position<15&&position>=0)
     {     
       this->gene= new Vector<Sensor*>(5);
-
     }
+    // The -th position has 4 genes (Used for debugging)
 		else if(position<0)
 		{
 			this->gene= new Vector<Sensor*>(4);
 		}		
+    // The 16th gene has 1 sensor
     else if(position==15)
     {
       this->gene= new Vector<Sensor*>(1); 
@@ -562,20 +572,24 @@ class Gene
     
   }
 
+  // Overloads teh equal operator to assign one gene to another
   Gene& operator =(const Gene& gene)
 	{
 		this->gene=gene.gene;
 		return *this;
 	}
 
+  // Copy constructor for the gene
   Gene(const Gene& gene)
 	{
 		this->gene=gene.gene;
 	}
   
+  // Destructor for the gene Runs when the gene goes out of scope
   ~Gene()
   {
-    // Might fail cause vector is automatic delete
+    // Deletes the gene
+    delete this->gene;
   }
   
   void makeGene(int position)
@@ -591,13 +605,14 @@ class Gene
         // The fourth gene stores behavior
         if(i<4)
         {
-          // O is empty
-          // 1 is wall
-          // 2 is battery
-          // 3 is not a wall
+           // O is empty
+           // 1 is wall
+           // 2 is battery
+           // 3 is not a wall
            sensorState=rand(0,3);
            sensorOrientation=array[i];
-
+          
+          // The 15th gene is used to perform the default behavior when none of the genes match the robot's positional readings
           if(position==15)
           {
             sensorOrientation=array[rand(0,3)];
@@ -645,8 +660,8 @@ class Gene
 class Robot
 {
   public:
- 
-  Vector<Gene*>* genome= new Vector<Gene*>(16); // robot's genome
+  
+  Vector<Gene*>* genome= new Vector<Gene*>(16); // robot's genome an array of genes
   Gene* sensor = new Gene(-1);
 	
   Grid* grid= new Grid(10); // Store the path that the robot moved
@@ -1407,7 +1422,7 @@ int main()
   ProgramGreeting();
   enterKey();
   system("clear");
-  Simulation* simulation= new Simulation(200,1);
+  Simulation* simulation= new Simulation(200,1000);
   simulation->runSimulation();
   simulation->savePopulationData();       
   cout<<*simulation<<'\n';
