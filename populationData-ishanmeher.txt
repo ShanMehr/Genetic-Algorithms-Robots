@@ -1,0 +1,4 @@
+Average Population Fitness
+Copy and Paste contents below into a spreadsheet program for to see a graph
+============================================================================
+2.07

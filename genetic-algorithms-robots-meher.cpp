@@ -1,32 +1,38 @@
 // genetic-algorithm-robots-meher.cpp
 // Ishan Meher, CISP 400
 // 12/17/2020
+/**
+ * For this class we were not allowed to use multiple files as it made it hard for the professor to grade the assignment.
+ * We are not allowed to use STL containers such as std::map and std::vector in this class 
+*/
 
-// Includes
+// Includes 
 #include<iostream>
 #include<string>
-#include<limits>
-#include<cctype>
 #include<ctime>
 #include<fstream> 
-#include<cstdlib>
+#include<chrono>
+#include<thread>
 
-// Namespace
 using namespace std;
 
-// Vector CLass
+// Vector Class
+/**
+ * Resizable array implementation of the Vector Abstract Data Type.
+ * Dynamic memory allocation.
+ **/
 template <class A>
 class Vector
 {
 	// The template class Vector creates an array that is able to store any data type 
 	public:
 
-		int length=0; // Instance variable that stores the size of the array
-		A* array; // Instance variable that stores the array
+		int length=0; // The length of the array
+		A* array; // The array
 
 	public:
 		
-    // Construcutor including the size of the array
+    // Constructor with a predefined size
 		Vector(int size)
 		{	
 			// Defines an Vector Object that accepts a length
@@ -39,7 +45,7 @@ class Vector
 			}			
 			array= new A[length];
 		}
-    
+
     // Default Constructor
 		Vector()
 		{
@@ -50,19 +56,17 @@ class Vector
 
 		}
 
-  // remvove the last element of the array
+  // Removes the last element of the array
   void removeLast()
   {
     remove(size()-1);
   }
-		
-  // Private method that users cannot access
+
 	private:
-    // Resize the array
+    // resize the array
 		void resizeVector()
 		{
 			// Resiszes the array by one
-
 			A* tempVector= new A[length+1]; // The tempVector stores all the data of array and has one more element
 
 			for(int position=0; position < length; position++)
@@ -80,11 +84,11 @@ class Vector
 		}
 
 	public:
-
-    // Changes the data at a specific position
+    // Changes the element at an index
 		void set(int index, A element)
 		{
-			  // Changes the data stored at the requested index
+			// Changes the data stored at the requested index
+			
 				if(isValidIndex(index))
 				{
 					array[index]=element;
@@ -92,7 +96,7 @@ class Vector
 			
 		}
 
-    // Copy Constructor that copies the data from one Vector to another
+    // Overlaod the equal operator
     Vector& operator =(const Vector& vector)
 		{
 			delete this->array;
@@ -100,14 +104,14 @@ class Vector
 			return *this;
 		} 
 
-    // Overload the equal sign operator to allow the user to copy the data from one Vector to another
+    // Copy Constructor  
     Vector(Vector& vector)
 		{	
-      delete this->array;
+            	delete this->array;
       this->array=vector.array;
 		}
   
-      // clear the Vector
+    // Clear the array
 		void clear()
 		{
 			// clears the contents of the arrray
@@ -116,18 +120,18 @@ class Vector
 			length=0;
 			array= new A[length]; 
 		}
-  
+
     // Returns the size of the array
 		int size()
 		{
 			// Returns the size of the array
 			return length;
-      
 		}
 
-    // Adds a new element to the end of the array
-		void add(A element)
+    // Adds an element at the end of ther list
+    void add(A element)
 		{
+			// Adds a new element to the end of the array
 			// Increases the size of the array by one
 			resizeVector();
 						
@@ -136,13 +140,14 @@ class Vector
 			
 		}
 
+    // Checks if the index is valid
 		bool isValidIndex(const int index)
 		{
 			// Checks if the index entered is within the bounds of the array
 			return (index>=0&&index<length);
 		}
 
-    // Returns the data at a specific position
+    // Gets the data at an index
 		A get(const int index)
 		{
 			// Gets the data stored at the requested index
@@ -157,7 +162,8 @@ class Vector
 				return (array[length-1]);
 			}
 		}
-    // Prints the item at a specific position
+
+    // Prints an item at an index
 		void printItem(int index)
 		{	
 				// Prints the item at the requested index
@@ -166,7 +172,7 @@ class Vector
 			
 		}
 
-    // Prints the whole Vector
+    // Prints the content of the array
 		void printContents()
 		{
 			// Prints the the entire array
@@ -176,7 +182,7 @@ class Vector
 			}
 		}
 
-    // Removes the element at a specific position
+    // Removes an element at an index
 		void remove(const int index)
 		{
 			// Removes an alement at any index of the array
@@ -199,7 +205,7 @@ class Vector
 						copyPosition++;
 						
 
-					}	
+					}
 				}
 				delete[] array;
 				length--;
@@ -208,7 +214,8 @@ class Vector
 			}
 			
 		}
-		// Unit Test
+		
+    // Vector Unit Test
 		void VectorUnitTest()
 		{
 			// Tests various functions of the Vector Class
@@ -234,7 +241,6 @@ class Vector
 			for(int i=0;i<array.size();i++)
 			{
 				cout<<array.get(i)<<'\n';
-
 			}
 			cout<<'\n';
 
@@ -268,60 +274,71 @@ class Vector
 			cout<<'\n';
 		}
 		
-    // Destructor Runs when the Vector goes out of scope
+    // Destructor
 		~Vector()
 		{
+      // Runs when the object goes out of scope of the
+
+      // Free the array from memory
 			delete[] array;
+
+      // Set the array's pointer to nullptr
 			array=nullptr;
 			this->length=0;
 		}	
 
 };
 
-//
+/**
+ * Grid Class 
+ * Used to create the map for the robots to traverse the
+ */
 class Grid
-{
+{	
 	public:
-	int gridXSize;
-  int gridYSize;
-	string** grid;
+	int gridXSize;  // The number of rows in the grid (Horizontal size)
+  int gridYSize;  // The number of columns in the grid (Vertical size)  
+	string** grid;  // The string array
 	
+  // Constructor of a  square grid with predefined map
 	Grid(const int gridSize)
 	{
-		this->gridXSize=gridSize;
-    this->gridYSize=gridSize;
-		this->grid=make2DArray();
+    // 
+		this->gridXSize=gridSize; // Sets the number of rows in the grid
+    this->gridYSize=gridSize; // Sets the number of columns in the grid
+		this->grid=make2DArray(); // Creates the 2D array based on the grid dimensions
 	}
 
+  // Default constructor
 	Grid()
 	{
-		this->gridXSize=10;
-    this->gridYSize=10;
-		this->grid=make2DArray();
-    
+		this->gridXSize=10; // Sets the number of rows in the grid (10 array cells)
+    this->gridYSize=10; // Sets the number of columns in the grid (10 array cells)
+		this->grid=make2DArray(); // Creates the 2D array based on the grid dimensions
 	} 
 
+  // Able to cerate a rectangular grid
   Grid(int xSize,int ySize)
   {
-    	this->gridXSize=xSize;
-    this->gridYSize=ySize;
-		this->grid=make2DArray();
+    this->gridXSize=xSize;  // Sets the number of rows in the grid
+    this->gridYSize=ySize;  // Sets the number of columns in the grid
+		this->grid=make2DArray(); // Creates the 2D array based on the grid dimensions
   }
 
+  // Destructor of the grid when the grid goes out of scope
 	~Grid()
 	{
-    
-    
+    // Free the grid from memory
     delete[] grid;
- 
-		
 	}
 
+  // Checks to see if the grid is empty
   bool PositionisEmpty(int xCoord,int yCoord)
   {
     return this->grid[xCoord][yCoord]=="";
   }
 
+  // Print the grid object by overloading the << operator
   friend ostream& operator <<(ostream& output, Grid& grid)
   {
     output<<"==============================\n";
@@ -346,7 +363,8 @@ class Grid
     return output;
   }
 
-  void gridUnitTest()
+  // Unit Testing of the Grid
+  static void gridUnitTest()
   { 
     cout<<"Grid Unit Test\n";
     Grid grid(2);
@@ -372,13 +390,11 @@ class Grid
     cout<<defaultGrid<<'\n';
 
     defaultGrid.printGrid();
-
   }
 
-   
+  // Prints the grid
   void printGrid()
   {
-    
     for(int i=0;i<gridXSize;i++)
     {
       for(int j=0;j<gridYSize;j++)
@@ -389,10 +405,16 @@ class Grid
     }
   }
 
-
- 
+  // Adds a string to a position in the grid
+  /**
+   * Used to add elements onto the grid with a specified position
+   * Primarily used to change the grid position
+   * Some string elements are added to the grid include: The robot, batteries and the robots trail
+   */
   void addToPosition(int row,int column,string text)
   {
+    // Checks if the index is within the bounds of the grid
+    // Mainly used to prevent segmentation faults
     if(row<gridXSize&&column<gridYSize)
     {
       string textValue=text;
@@ -401,13 +423,15 @@ class Grid
   }
 
 	public:
-
+  // Creates a 2D array based on the grid dimensions
 	string** make2DArray()
 	{
+    // Pointer to the string array
 		string** array;
-    
+    // Define the number of rows that the array wili have
 		array= new string*[this->gridXSize];
-  
+
+    // Adds a column array to each row of the grid
 		for(int index=0;index<this->gridXSize;index++)
 		{
 			array[index]= new string[this->gridYSize];
@@ -416,32 +440,35 @@ class Grid
     return array;
 	}
 
-
+  // Gets the string at a specified position
 	string getValue(int x,int y)
-	{
+  {
 		return grid[x][y];
 	}
-
   
-
 };
 
+
+/**
+ * Functor to generate a random number
+ * Mainly used to save me time from of reacting a random number generator for each class
+ */
 class RandomNumberGenerator
 {
   public:
- 
- 
+
   int operator()(int lo,int hi)
   {
-    // Generates a random number between lo and hi
-    //return (rand()% (hi-lo+1))+lo;
-    
+    // Generates a random number between lo and hi    
       int random= ( rand()%((hi - lo) + 1) + lo); 
       return random;
-  
   }
 };
 
+/** 
+ * Functor for enter key
+ * Used several times throughout the program
+ */ 
 class EnterKey
 {
   public:
@@ -452,7 +479,7 @@ class EnterKey
         
         cout << "Press Enter key to Continue\n";
         while (enter==cin.get() )      
-		{
+		    {
                 if ( enter == (int)'\n' ) 
                 {
                     
@@ -464,21 +491,30 @@ class EnterKey
                     exit(EXIT_FAILURE);
                 }
         }
-  
   }
-
 };
 
-
+/**
+ * Sensor Struct
+ * Used to store the sensor data
+ * The sensorState represents the reading of the sensor of the position that the robot plans to move next
+ * There are 3 states: Empty(0), Wall(1) ,Battery(2), Not a wall can be either empty or battery(3-Optional State)
+ # The orientation of the sensor is the cardinal direction that the robot is too move (N,S,E,W)
+ */
 struct Sensor
 {
+  // The sensorState represents the reading of the sensor of the position that the robot plans to move next
+  // There are 3 states: Empty(0), Wall(1) ,Battery(2), Not a wall can be either empty or battery(3-Optional State)
   int sensorState;
-  char orientation;
+  char orientation; // The direction the robot will move
+  
+  // Constructor that sets the orientiation that the robot will move to next
   Sensor(char orientation)
   {
     this->orientation=orientation;
-    
   }
+  
+  // 
   Sensor(int sensorState,char orientation)
   {
     this->orientation=orientation;
@@ -492,12 +528,10 @@ struct Sensor
     return output;
   }
 
-
   bool operator==(Sensor& sensor)
   {
     return (sensor.sensorState==this->sensorState&&this->orientation==sensor.orientation);
   }
-
 };
 
 
@@ -512,9 +546,9 @@ class Gene
   Gene(int position)
   {
     if(position<15&&position>=0)
-    {
+    {     
       this->gene= new Vector<Sensor*>(5);
-     
+
     }
 		else if(position<0)
 		{
@@ -530,20 +564,15 @@ class Gene
 
   Gene& operator =(const Gene& gene)
 	{
-		
 		this->gene=gene.gene;
 		return *this;
 	}
 
-
   Gene(const Gene& gene)
 	{
-		
 		this->gene=gene.gene;
-		
 	}
   
-
   ~Gene()
   {
     // Might fail cause vector is automatic delete
@@ -552,69 +581,52 @@ class Gene
   void makeGene(int position)
   {
     // There are five sensors inside a "gene"
-    
-
     char array[] = {'n','s','w','e'};
     char sensorOrientation;
     int sensorState;
- 
-    
+
       for(int i=0;i<this->gene->size();i++)
       {
-
         // The first 3 genes store sensor states
         // The fourth gene stores behavior
         if(i<4)
         {
-
           // O is empty
           // 1 is wall
           // 2 is battery
           // 3 is not a wall
            sensorState=rand(0,3);
            sensorOrientation=array[i];
-					 
+
           if(position==15)
           {
             sensorOrientation=array[rand(0,3)];
             sensorState=1;
           }
-          
         }
         else
         {
           // The position of the gene that determines the command;
-					
 					sensorState=1;
           sensorOrientation=array[rand(0,3)];
           
         }
-        
-        
         Sensor* sensor= new Sensor(sensorState,sensorOrientation);
         this->gene->set(i,sensor);
-        
       }
-    
-    
   }
 
 
-  void GeneUnitTest()
+  static void GeneUnitTest()
   {
     Gene gene(1);
     cout<<"Gene Unit Test\n";
-    for(int i=0;i<gene.gene->size();i++)
-    {
-      //printGene(i);
-    }
-
     cout<<gene;
   }
 
   void printGene(int index)
   {
-    cout<<"Sensor: "<<index<<"\n"<<*this->gene->get(index);
+    //cout<<"Sensor: "<<index<<"\n"<<*this->gene->get(index);
   }
 
   friend ostream& operator <<(ostream& output,Gene& gene)
@@ -622,7 +634,6 @@ class Gene
     for(int i=0;i<gene.gene->size();i++)
     {
       output<<"Sensor: "<<i+1<<'\n';
-      output<<*gene.gene->get(i)<<'\n';
     }
     return output;
   }
@@ -680,7 +691,7 @@ class Robot
     // Add all 16 genes to the robot
     addGenesToRobot();
     populateGrid();
-    sensorData();
+    
     
 		
   }
@@ -690,7 +701,6 @@ class Robot
     // Make a new robot from two parents
     reproduction(parent1,parent2,parity);
     populateGrid();
-    sensorData();
 
     
   }
@@ -780,7 +790,6 @@ class Robot
     Grid* grid = new Grid();
     this->grid=grid;
     populateGrid();
-    sensorData();
   }
 
 
@@ -839,7 +848,6 @@ class Robot
     // Adds either the even genes or odd genes based on parameter
     // If parity is 1 add genes from odd postions
     // Else if parity is 2 add genes from even positions
-    
     Vector<Gene*>* childGenome= new Vector<Gene*>(8);
     for(int i=0;i<robot.genome->size();i++)
     {
@@ -868,7 +876,6 @@ class Robot
   void mutateRobot()
   {
     
-
     int randomGene= rand(0,15);
     Gene* gene; // Gene to be added 
     if(randomGene<15&&randomGene>=0)
@@ -876,7 +883,6 @@ class Robot
       // If the gene to be mutated is not the last gene
       // Change the non-default gene
        gene= new Gene(0);
-      
     }    
     else if(randomGene==15)
     {
@@ -885,8 +891,6 @@ class Robot
     }
     
     this->genome->set(randomGene,gene);
-   
-
   }
 
   bool isMutatable(int mutationRate)
@@ -912,7 +916,7 @@ class Robot
     
 	} 
 
-  void robotUnitTest()
+   static void robotUnitTest()
   {
     cout<<"Robot Unit Tests\n";
     Robot robot1;
@@ -924,28 +928,30 @@ class Robot
     robot2.robotLifeCycle();
     //cout<<robot2<<endl;
     
-    
     Robot robot3(robot1,robot2,1);
     robot3.robotLifeCycle();   
     cout<<robot3;
-   
-    
+
   }
 
   friend ostream& operator <<(ostream& output,Robot& robot)
   {
 		int xCoord=robot.xCoord;
 		int yCoord=robot.yCoord;
-    output<<"=============================================\n";
-    cout<<"Robot Data:\n";
+    output<<"=============================================\n";;
     output<<"Robot Grid:\n"<<*robot.grid;
-		
-    cout<<"Life Data:\n";
+     cout<<"Life Data:\n";
 		output<<"Robot Health: "<<robot.health<<'\n';
     output<<"Lifespan: "<<robot.lifespan<<'\n'; 
     output<<"*Robot Fitness(The number of batteries colleced by the robot): "<<robot.fitness<<'\n';
 		output<<"======================\n";
-		output<<"Legend:\n";
+		output<<"Map Code Legend:\n";
+		output<<"Battery Code: B\n";
+		output<<"Robot Code: R\n";
+		output<<"Start Position Code: S\n";
+    output<<"Past Position Code: @\n";
+		output<<"======================\n";
+		output<<"Sensor Code Legend:\n";
 		output<<"Empty Space Code: 0\n";
 		output<<"Wall Code: 1\n";
 		output<<"Battery Code: 2\n";
@@ -989,8 +995,6 @@ class Robot
   void populateGrid()
   {
     // Add a random number to grid
-
-    
     string batteryCell = "B";
     string robotCell = "R";
     int numberOfCells=0;
@@ -1022,28 +1026,34 @@ class Robot
             numberOfCells++; 
           }
         }
-
       }
     }
   }
 
-  void robotLifeCycle()
+  void robotLifeCycle(bool showMoves=false)
   {
    while(this->health>0)
    {
-     positionToMoveRobot();     
+     if(showMoves)
+     {
+       cout<<*this->grid;
+       cout<<"Health: "<<this->health<<'\n';
+       cout<<"Batteries Collected(Fitness): "<<this->fitness<<'\n';
+       cout<<"Number of moves made: "<<this->lifespan<<'\n';
+       std::this_thread::sleep_for(std::chrono::milliseconds(700));
+       
+      system("clear");       
+     }
+     positionToMoveRobot();  
+        
    } 
   }
 
   void positionToMoveRobot()
   {
+    //Scans the Genes of the genome and compares it to the sensor
+    //If the sensor is matched then the gene that is matched last sensor is used for movement
 
-    /*
-      Scans the Genes of the genome and compares it to the sensor
-      If the sensor is matched then the gene that is matched last sensor is used for movement
-    */
-
-    
     // Get the most current Sensor Data
     sensorData();
 
@@ -1051,11 +1061,8 @@ class Robot
     
     for(int i=0; i<this->genome->size();i++)
     {
-     
       if(sensorIsMatched(*this->genome->get(i),*this->sensor))
-      {
-        // Stores the last moved location in the grid with a @ symbol
-       
+      {      
         // orientation of the last sensor of the gene is used for movement
         moveBasedOnOrientation(this->genome->get(i)->gene->get(4)->orientation);
                   
@@ -1064,7 +1071,6 @@ class Robot
         break;
       } 
     }
-
     if(!robotWasMoved)
     {
       // If the robot was not moved move the robot based on the sensor data in the default sensor
@@ -1073,11 +1079,8 @@ class Robot
      
   
     }
-    
     this->lifespan++; // Increment the lifespan which stores how many turns the robot lived
     this->health--;
-
-
   }
 
   bool sensorIsMatched(Gene& gene,Gene& sensor)
@@ -1089,9 +1092,9 @@ class Robot
       bool matched=*gene.gene->get(i)==*sensor.gene->get(i);
       if(matched)
       {
-        // If an exact mathch to the senesor state
+        // If an exact mathch to the sensor state
       }
-      else if(geneSensor->sensorState==3&&(sensor.gene->get(i)->sensorState==0||sensor.gene->get(i)->sensorState==2||sensor.gene->get(i)->sensorState==3))
+      else if(geneSensor->sensorState==3&&(sensor.gene->get(i)->sensorState==0||sensor.gene->get(i)->sensorState==2||sensor.gene->get(i)->sensorState==1))
       {
         // Don't really care if the sensor value is a battery or empty
       }
@@ -1118,14 +1121,11 @@ class Robot
       if(lifespan==0)
       {
         this->grid->grid[this->xCoord][this->yCoord]="S";
-
       }
       else
       {
-        this->grid->grid[this->xCoord][this->yCoord]="#";
+        this->grid->grid[this->xCoord][this->yCoord]="@";
       }
-      
-    
       if(positionhasBattery(xCoord,yCoord))
       {
         this->health+=5;
@@ -1136,7 +1136,6 @@ class Robot
       this->xCoord=xCoord;
       this->yCoord=yCoord;
     }
-    
   }
 
 
@@ -1173,16 +1172,12 @@ class Simulation
   Vector<Robot*>* population;
   Vector<double> averagePopulationFitness;
   int numberOfGenerations;
-  EnterKey enter;
-  
-  
+  EnterKey enter; 
 
   Simulation()
   {
     population= new Vector<Robot*>(200);
-  
     this->numberOfGenerations=1000;
-    
   }
 
   Simulation(int size,int numberOfGenerations)
@@ -1252,9 +1247,7 @@ class Simulation
       this->population->get(i)->reset();
       this->population->get(i)->robotLifeCycle();
       
-    }
-  
-         
+    }      
   }
 
   void matePopulation()
@@ -1280,10 +1273,7 @@ class Simulation
         i++;
        
       }
-    }
-    
-   
-    
+    }    
     this->population=nextGenerationPopulation;
   }
 
@@ -1291,7 +1281,6 @@ class Simulation
   void naturalSelection()
   {
       // Make a temporary array with size of half the population's size
-      
       int populationSize=this->population->size()/2;
       if(populationSize>0)
       {
@@ -1306,14 +1295,8 @@ class Simulation
         remainingPopulation->set(i,this->population->get(largest));
         
         // Remove the current largest from the list
-        this->population->remove(largest);
-        
-
-         
-        
+        this->population->remove(largest);        
       }
-      
-
       // Add the largest half of the population to the population array
       //delete this->population;
       delete this->population;
@@ -1335,7 +1318,6 @@ class Simulation
       }
     }
     return index;
-    
   }
 
   friend ostream& operator << (ostream& output,Simulation& simulation)
@@ -1376,17 +1358,10 @@ void savePopulationData()
         outputFile<<"Average Population Fitness\n";
         outputFile<<"Copy and Paste contents below into a spreadsheet program for to see a graph\n";
         outputFile<<"============================================================================\n";
-
-        
-
         // Loops through the array and adds the contents of each object
         for(int index=0; index<this->numberOfGenerations;index++)
-        {
-         
-         
+        {         
           outputFile<<this->averagePopulationFitness.get(index)<<'\n';
-              
-          
         }
         
         outputFile.close();
@@ -1398,15 +1373,27 @@ void savePopulationData()
     cout<<"Simulation Unit Tests\n";
     Simulation simulation(200,1);
     simulation.runSimulation();
-    
-    cout<<simulation<<'\n';
-    
-    
+    cout<<simulation<<'\n'; 
+  }
+
+  void runFittestRobot()
+  {
+    int bestRobot= findLargest();
+    runRobot(bestRobot);
+  }
+
+  void runRobot(int index)
+  { 
+    if(index<this->population->size())
+    {
+      Robot* robot= this->population->get(index);
+      robot->reset();
+      robot->robotLifeCycle(true); 
+      cout<<*robot<<'\n';
+    }
   }
 
 };
-
-
 
 // Function Prototypes
 void UnitTests();
@@ -1420,16 +1407,16 @@ int main()
   ProgramGreeting();
   enterKey();
   system("clear");
-  UnitTests();
-  Simulation* simulation= new Simulation(200,5000);
+  Simulation* simulation= new Simulation(200,1);
   simulation->runSimulation();
   simulation->savePopulationData();       
   cout<<*simulation<<'\n';
+  cout<<"To see a graph copy and paste contents below the ====== of the txt file generated by the simulation\n";
+  cout<<"Runnning the fittest robot over a grid\n";
+  simulation->runFittestRobot();
+  delete simulation;
   
 }
-
-
-
 
 void UnitTests()
 {
@@ -1443,17 +1430,17 @@ void UnitTests()
   system("clear");
 
   Gene gene(1);
-  gene.GeneUnitTest();
+  Gene::GeneUnitTest();
   enterKey();
   system("clear");
   
   Grid grid;
-  grid.gridUnitTest();
+  Grid::gridUnitTest();
   enterKey();
   system("clear");
 
   Robot robot1;
-  robot1.robotUnitTest();
+  Robot::robotUnitTest();
   enterKey();
   system("clear");
  
