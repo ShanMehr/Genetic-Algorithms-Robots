@@ -2,6 +2,7 @@
 // Ishan Meher, CISP 400
 // 12/17/2020
 
+// Includes
 #include<iostream>
 #include<string>
 #include<limits>
@@ -10,20 +11,22 @@
 #include<fstream> 
 #include<cstdlib>
 
-
+// Namespace
 using namespace std;
 
+// Vector CLass
 template <class A>
 class Vector
 {
 	// The template class Vector creates an array that is able to store any data type 
 	public:
 
-		int length=0;
-		A* array;
+		int length=0; // Instance variable that stores the size of the array
+		A* array; // Instance variable that stores the array
 
 	public:
 		
+    // Construcutor including the size of the array
 		Vector(int size)
 		{	
 			// Defines an Vector Object that accepts a length
@@ -36,10 +39,8 @@ class Vector
 			}			
 			array= new A[length];
 		}
-
-
-     
-
+    
+    // Default Constructor
 		Vector()
 		{
 			// Creates an Vector object
@@ -49,14 +50,15 @@ class Vector
 
 		}
 
+  // remvove the last element of the array
   void removeLast()
   {
     remove(size()-1);
   }
 		
-
+  // Private method that users cannot access
 	private:
-
+    // Resize the array
 		void resizeVector()
 		{
 			// Resiszes the array by one
@@ -79,10 +81,10 @@ class Vector
 
 	public:
 
+    // Changes the data at a specific position
 		void set(int index, A element)
 		{
-			// Changes the data stored at the requested index
-			
+			  // Changes the data stored at the requested index
 				if(isValidIndex(index))
 				{
 					array[index]=element;
@@ -90,6 +92,7 @@ class Vector
 			
 		}
 
+    // Copy Constructor that copies the data from one Vector to another
     Vector& operator =(const Vector& vector)
 		{
 			delete this->array;
@@ -97,13 +100,14 @@ class Vector
 			return *this;
 		} 
 
-       Vector(Vector& vector)
+    // Overload the equal sign operator to allow the user to copy the data from one Vector to another
+    Vector(Vector& vector)
 		{	
-            	delete this->array;
+      delete this->array;
       this->array=vector.array;
 		}
-
-
+  
+      // clear the Vector
 		void clear()
 		{
 			// clears the contents of the arrray
@@ -112,7 +116,8 @@ class Vector
 			length=0;
 			array= new A[length]; 
 		}
-
+  
+    // Returns the size of the array
 		int size()
 		{
 			// Returns the size of the array
@@ -120,11 +125,9 @@ class Vector
       
 		}
 
-	
+    // Adds a new element to the end of the array
 		void add(A element)
 		{
-			// Adds a new element to the end of the array
-
 			// Increases the size of the array by one
 			resizeVector();
 						
@@ -139,8 +142,7 @@ class Vector
 			return (index>=0&&index<length);
 		}
 
-		
-
+    // Returns the data at a specific position
 		A get(const int index)
 		{
 			// Gets the data stored at the requested index
@@ -155,7 +157,7 @@ class Vector
 				return (array[length-1]);
 			}
 		}
-
+    // Prints the item at a specific position
 		void printItem(int index)
 		{	
 				// Prints the item at the requested index
@@ -164,6 +166,7 @@ class Vector
 			
 		}
 
+    // Prints the whole Vector
 		void printContents()
 		{
 			// Prints the the entire array
@@ -173,6 +176,7 @@ class Vector
 			}
 		}
 
+    // Removes the element at a specific position
 		void remove(const int index)
 		{
 			// Removes an alement at any index of the array
@@ -195,8 +199,7 @@ class Vector
 						copyPosition++;
 						
 
-					}
-					
+					}	
 				}
 				delete[] array;
 				length--;
@@ -205,7 +208,7 @@ class Vector
 			}
 			
 		}
-		
+		// Unit Test
 		void VectorUnitTest()
 		{
 			// Tests various functions of the Vector Class
@@ -265,6 +268,7 @@ class Vector
 			cout<<'\n';
 		}
 		
+    // Destructor Runs when the Vector goes out of scope
 		~Vector()
 		{
 			delete[] array;
@@ -274,8 +278,9 @@ class Vector
 
 };
 
+//
 class Grid
-{	
+{
 	public:
 	int gridXSize;
   int gridYSize;
